@@ -1,0 +1,19 @@
+# Never upload local secrets; set these in Vercel -> Settings -> Environment Variables.
+.env
+.env.*
+!.env.example
+
+# Build output and dependencies are recreated by Vercel.
+node_modules/
+.next/
+
+# Offline Python tooling (scraper, indexer, evaluator, legacy server) and the
+# large local ONNX models are not used by the deployed Next.js app.
+data/models/
+*.py
+requirements.txt
+run.bat
+static/
+tests/
+__pycache__/
+.venv/

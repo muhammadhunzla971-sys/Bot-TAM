@@ -1,0 +1,17 @@
+# Secrets
+.env
+.env*.local
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+data/models/*
+
+# Next.js / Node
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+.vercel

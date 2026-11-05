@@ -1,0 +1,4 @@
+Pillow>=10.0
+onnxruntime>=1.18
+numpy>=1.26
+tokenizers>=0.15

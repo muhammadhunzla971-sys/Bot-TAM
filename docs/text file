@@ -1,0 +1,73 @@
+ROLE
+You are a senior AI/backend engineer working on an existing project: the "Punjab Tourism Assistant". Work incrementally, keep the codebase simple, and never break existing behavior.
+
+PROJECT CONTEXT (source of truth is the code; docs/ folder describes it)
+- Local Python 3.10+ app (Windows/PowerShell). Standard-library HTTP server in chatbot.py, UI in static/index.html (Leaflet + OpenStreetMap), corpus in data/tourism_pages.jsonl, BM25-style retrieval, Gemini (default) or Groq for answers with citations restricted to retrieved sources, local extractive fallback, Photon geocoder, local CLIP image matching (image_matching.py), authorized crawler (scrape_tourism.py).
+- Routes: GET /, GET /api/health, POST /api/chat, POST /api/image.
+- Existing limits and controls must be preserved: loopback bind by default, 2,000-char question, 10 history messages, 64 KiB JSON body, 10 MiB image, 40M pixels, pinned model SHA-256, key redaction, no chat text in logs.
+- The existing test suite (python -m unittest discover -s .\tests -v, currently 38 tests) must keep passing after every phase.
+
+GOAL
+Fix the known audit findings and add the features below, with tests, without paid map APIs (no Google Maps API key). Free/keyless services only (OpenStreetMap, Photon, OpenRouteService free tier is optional and must be config-driven).
+
+HARD CONSTRAINTS
+1. No arbitrary-URL fetching. Map-link support is limited to an allowlist (google.com/maps, maps.google.com, maps.app.goo.gl, goo.gl/maps). Parse coordinates from the URL text where possible; for short links, follow redirects only on allowlisted hosts, HTTPS only, max 3 redirects, short timeout, no private/loopback IP targets (SSRF protection). Unsupported links get a clear message.
+2. Never claim exact precision when the source only supports a town or approximate feature. Label results: "verified" (from places database), "approximate" (geocoder), or "search only".
+3. Never log or display API keys, raw provider payloads, or visitor question text.
+4. Do not add heavy dependencies without a clear reason; if you add one, update requirements.txt and explain why. Keep the server runnable with `python .\chatbot.py`.
+5. Respect crawler rules (HTTPS, same host, robots.txt, delay). Do not run the crawler as part of this task.
+6. Keep answers grounded: factual answers must come from retrieved corpus text; if there is no evidence, say so explicitly.
+7. Support English, Urdu script, and Roman Urdu input. Reply in the user's language.
+
+WORK PHASE BY PHASE. After each phase: run all tests, summarize changed files, and stop for my confirmation before starting the next phase.
+
+PHASE 1: Location correctness
+a) Create data/places.json: verified places database. Schema per entry: id, name_en, name_ur, aliases (list incl. Roman Urdu and spelling variants), lat, lng, district, category, source_url, verified (bool), note. Seed with 10 well-known Punjab tourism sites as placeholders marked verified=false where coordinates are not confirmed; never invent coordinates silently.
+b) Lookup order: places.json (alias/fuzzy match) first, then Photon.
+c) Photon: request up to 5 candidates, bias/filter to Pakistan (countrycode/bbox), return city/district/country per candidate, apply a simple confidence rule, and ask the user to choose when ambiguous.
+d) Replace the fixed department marker label with "approximate building location" until verified.
+e) Add timeouts, clear error states, and graceful UI messages for geocoder failure.
+f) Tests: ambiguous names, non-Punjab results, no result, provider error, Urdu-script label, alias match.
+
+PHASE 2: Intent routing and parsing
+a) Add an intent router: info, location, directions, image, smalltalk. Rule-based first; keep it deterministic and testable.
+b) Replace the heuristic place-name stripping with an alias-aware extractor that preserves user spelling and region context.
+c) Add tests for English, Urdu, and Roman Urdu phrasing, follow-up questions, and link inputs.
+
+PHASE 3: Safe map-link input
+a) Implement the allowlisted Google Maps URL handling from the constraints above.
+b) Distinguish "coordinates parsed from link" from "geocoded search result" in the response.
+c) Tests: valid forms, short link, non-allowlisted host, private-IP redirect, malformed URL, too many redirects.
+
+PHASE 4: Reliability and degraded mode
+a) Clear UI status when the answer came from local fallback or AI is unavailable/quota-limited (Gemini 429).
+b) Provider chain: Gemini, then Groq (if configured), then local answer. Add a small in-memory response cache (bounded size, TTL) keyed by normalized question plus retrieved source IDs.
+c) Operator diagnostics endpoint (e.g. GET /api/diagnostics): provider/geocoder availability and latency only, no keys, no question text. Bounded retries only for transient errors.
+d) Vendor Leaflet locally (or add SRI) and add a fallback message when tiles are offline.
+e) Add run.bat that keeps the console open, prints the URL and the health endpoint, and shows startup errors.
+
+PHASE 5: Retrieval quality
+a) Add title/phrase weighting and a confidence threshold with an explicit no-result path.
+b) Add optional hybrid search: a small multilingual ONNX embedding model (pinned URL + SHA-256, same pattern as the CLIP assets) fused with BM25 using reciprocal rank fusion. Must degrade gracefully to BM25 if the model is unavailable.
+c) Add a grounding check: drop or flag generated claims not supported by retrieved text.
+d) Create tests/eval_set.jsonl with 40 questions (English, Urdu, Roman Urdu, ambiguous, unanswerable) and an evaluation script reporting hit@3, no-answer accuracy, and location accuracy.
+
+PHASE 6: User features
+a) Nearby places (Haversine on places.json).
+b) Live location: browser Geolocation (HTTPS/localhost, permission-based), distance to the selected place, and a "Directions" link (external Google Maps directions URL, no API key). Location is processed in the browser only unless the user explicitly requests a route.
+c) "Copy coordinates" button, mobile-friendly larger map, zoom controls.
+d) Trip planner: a structured itinerary (day, place, timing, source citation) generated only from corpus and places.json; refuse to invent opening hours or prices.
+e) Link a confirmed image match to a map of the identified place (ask the user to confirm the landmark first).
+
+PHASE 7: Documentation
+Update docs/ (overview, audit status, operations, privacy, roadmap) to match what was actually implemented. Mark remaining items as proposals. Update privacy notes for any new external call.
+
+DEFINITION OF DONE (per phase)
+- All existing and new tests pass; list the exact command output summary.
+- No secrets or visitor text in logs; no new unauthenticated network exposure.
+- A short changelog: what changed, why, known limits, and manual verification steps I should run on Windows.
+
+OUTPUT FORMAT
+Start by restating the plan for the requested phase in under 10 lines, then implement it. At the end, list: files changed, tests added, commands to run, and open questions. Ask me before making any assumption about coordinates, licenses, or external service usage.
+
+START NOW with PHASE 1 only.

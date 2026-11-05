@@ -1,0 +1,55 @@
+You are a senior AI/software engineer working on my project "Punjab Tourism Assistant" (Python local chatbot with BM25/hybrid retrieval, Gemini→Groq provider fallback, Leaflet/OSM maps, Photon geocoding, CLIP image matching, crawler in scrape_tourism.py, static/index.html UI).
+
+An audit dated 2026-11-04 found the issues below. Fix them in the priority order given. Work phase by phase, and after each phase run the full test suite before moving on.
+
+## GLOBAL RULES
+- NEVER read, print, log, or commit .env values or any API keys. In tests use dummy keys like "test-key-123".
+- Do not change unrelated behavior. Keep diffs minimal and focused.
+- Every fix must come with a test that FAILS before the fix and PASSES after it. Show me the before/after result.
+- Use only the standard library plus dependencies already in the project, unless I approve otherwise.
+- After each phase, give me a short summary: files changed, tests added, test result.
+- Baseline to keep green: `python -m unittest discover -s .\tests -v` (currently 86 tests passing), and `python .\evaluate_retrieval.py` and `--hybrid` must not regress.
+
+## PHASE 1 (HIGH) — A-01: Groq Authorization header is a placeholder
+- File: chatbot.py around lines 1827-1831, function call_groq().
+- Bug: the Authorization header is set to a fixed masked string instead of the configured key, so Groq always fails to authenticate and the Gemini→Groq fallback silently drops to the local answer.
+- Fix: build the header as `Authorization: Bearer <configured key>` from the same config/env source the Gemini call uses (check how the key is loaded; do not hardcode).
+- Handle a missing/empty key explicitly: skip Groq with a clear, non-secret log line and continue fallback.
+- Tests: mock the HTTP layer (urllib/requests, whichever is used), call call_groq() with a dummy key, and assert the outgoing header equals "Bearer test-key-123". Also add a test that an empty key does not send a request. Make sure the key never appears in logs or exception messages (assert on captured logs).
+- Also add a simple fallback counter/log (provider name + reason, no question text) so a silently failing provider is visible next time.
+
+## PHASE 2 (MEDIUM) — A-02: Leaflet popup HTML injection
+- File: static/index.html around lines 527-529.
+- Bug: the normal location popup is built as an HTML string from the place name, which can come from Photon (external). Leaflet treats string popup content as HTML.
+- Fix: build the popup content as a DOM element (document.createElement) and set untrusted text only via textContent, the same pattern the ambiguous-candidate path already uses. Audit the whole file for any other innerHTML / string-HTML use with external or user-derived data (place names, answers, citations, itinerary text) and fix those too.
+- Test: add a minimal test. If there is no JS test setup, extract the popup-builder into a small pure function and test it with Node (if available) or add a Python test that scans index.html to ensure no innerHTML/bindPopup(string) is used with dynamic data. Verify with a payload like `<img src=x onerror=alert(1)>` that it is rendered as plain text.
+
+## PHASE 3 (MEDIUM) — A-04: Failed crawl can destroy the existing corpus
+- File: scrape_tourism.py around lines 306-310.
+- Bug: the output file is opened in write/truncate mode before the crawl finishes, so a failure leaves a partial corpus.
+- Fix: write to a temporary sibling file (same directory, e.g. output + ".tmp"), flush/fsync, and only after the crawl succeeds replace the destination atomically with os.replace(). On any exception, delete the temp file and keep the old corpus untouched. Re-raise or exit with a clear error.
+- Tests: simulate a crawl that fails midway and assert the original corpus file content is byte-for-byte unchanged and no temp file is left behind; also test the success path replaces the file.
+
+## PHASE 4 (MEDIUM) — A-03: robots.txt fetch ignores same-host redirect guard
+- File: scrape_tourism.py around lines 208-219 (robots fetch) vs lines 243-272 (SameHostRedirectHandler used for pages/images).
+- Fix: fetch robots.txt through the same guarded opener (HTTPS + same host validation), or reject redirects entirely. If robots.txt cannot be fetched safely, follow the crawler's existing documented policy and state which one you chose.
+- Tests: a redirect to another host must be rejected; a same-host redirect behaves per policy. Use mocks, do NOT run the real crawler or make real network calls.
+
+## PHASE 5 — Quality and validation improvements
+1. A-06: Add a lightweight browser viewport smoke test (Playwright) at phone (390x844), tablet (768x1024), short-height (1024x500) and desktop (1440x900): page loads, no horizontal scroll, chat input and map visible. If Playwright cannot launch in this environment, make the test skip gracefully with a clear message and write a short manual checklist in docs instead.
+2. Retrieval: BM25 currently scores hit@3 0.857 / no-answer 0.900 / location 0.900, hybrid scores 0.886 / 0.975 / 0.950. Evaluate making hybrid the default (with automatic BM25 fallback when ONNX assets are missing). Show me the numbers and any latency difference before changing the default, and ask me before switching it.
+3. Eval set: expand evaluate_retrieval cases from 40 to at least 100. Include Roman Urdu and Urdu queries, out-of-scope questions (should give no-answer), and location questions. Keep the old 40 cases unchanged and report the new metrics separately.
+4. Out-of-scope answers: for questions outside the Punjab Tourism corpus, make it clearer in the UI that the answer is unverified (no source), and never state specific opening hours, prices, or distances without a source. Propose the wording first.
+
+## DO NOT DO
+- Do not invent or add place coordinates (A-05). Coordinates stay unverified until I supply an authoritative source.
+- Do not run the real crawler, and do not expose the app on a network address.
+- Do not skip tests to make things pass.
+
+## FINAL DELIVERABLE
+When everything is done, give me:
+1. A table: finding ID, status (fixed / partially fixed / not done), files changed, test added.
+2. Final results of the unit tests, evaluate_retrieval (BM25 and --hybrid), and the new smoke test.
+3. A short list of anything you could not verify or that still needs my manual check.
+
+Start with Phase 1 now. Show me the diff and test result, then continue automatically to Phase 2 and so on, stopping only if something needs my decision.

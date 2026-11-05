@@ -1,0 +1,60 @@
+{"id":"extra-ur-sheikhupura","question":"شیخوپورہ قلعہ کہاں ہے؟","expected_urls":["https://tourism.punjab.gov.pk/sheikhupura-fort"],"answerable":true,"location":true}
+{"id":"extra-ur-pearl-mosque","question":"پرل مسجد کے بارے میں ویب سائٹ کیا بتاتی ہے؟","expected_urls":["https://tourism.punjab.gov.pk/pearl-mosque"],"answerable":true,"location":false}
+{"id":"extra-ur-wazir-khan","question":"وزیر خان مسجد کا مقام کہاں ہے؟","expected_urls":["https://tourism.punjab.gov.pk/wazir-khan-mosque"],"answerable":true,"location":true}
+{"id":"extra-ur-gurdwaras","question":"پنجاب میں سکھ گوردواروں کے متعلق معلومات کہاں ملیں گی؟","expected_urls":["https://tourism.punjab.gov.pk/sikh-gurdwaras"],"answerable":true,"location":false}
+{"id":"extra-ur-nankana","question":"گوردوارہ ننکانہ صاحب کہاں واقع ہے؟","expected_urls":["https://tourism.punjab.gov.pk/gurdwara-nankana-sahib"],"answerable":true,"location":true}
+{"id":"extra-ur-spring","question":"بہار کے میلے کے متعلق کیا بتایا گیا ہے؟","expected_urls":["https://tourism.punjab.gov.pk/spring_festival"],"answerable":true,"location":false}
+{"id":"extra-ur-hiran","question":"ہیرن مینار کہاں واقع ہے؟","expected_urls":["https://tourism.punjab.gov.pk/hiran-minar"],"answerable":true,"location":true}
+{"id":"extra-ur-javed","question":"جاوید منزل کے بارے میں بتائیں۔","expected_urls":["https://tourism.punjab.gov.pk/javed-manzil"],"answerable":true,"location":true}
+{"id":"extra-ur-chauburji","question":"چوبرجی کس تاریخی دور سے تعلق رکھتی ہے؟","expected_urls":["https://tourism.punjab.gov.pk/chauburji"],"answerable":true,"location":false}
+{"id":"extra-ur-shalimar","question":"شالامار باغ کہاں ہیں؟","expected_urls":["https://tourism.punjab.gov.pk/shalimar-gardens"],"answerable":true,"location":true}
+{"id":"extra-roman-sheikhupura","question":"Sheikhupura Fort kahan waqay hai?","expected_urls":["https://tourism.punjab.gov.pk/sheikhupura-fort"],"answerable":true,"location":true}
+{"id":"extra-roman-pearl","question":"Pearl Masjid ke bare mein website kya batati hai?","expected_urls":["https://tourism.punjab.gov.pk/pearl-mosque"],"answerable":true,"location":false}
+{"id":"extra-roman-wazir","question":"Wazir Khan Masjid Lahore mein kahan hai?","expected_urls":["https://tourism.punjab.gov.pk/wazir-khan-mosque"],"answerable":true,"location":true}
+{"id":"extra-roman-nankana","question":"Gurdwara Nankana Sahib kahan waqay hai?","expected_urls":["https://tourism.punjab.gov.pk/gurdwara-nankana-sahib"],"answerable":true,"location":true}
+{"id":"extra-roman-spring","question":"Punjab ke Spring Festival ke bare mein batao.","expected_urls":["https://tourism.punjab.gov.pk/spring_festival"],"answerable":true,"location":false}
+{"id":"extra-roman-hiran","question":"Hiran Minar Sheikhupura mein kahan hai?","expected_urls":["https://tourism.punjab.gov.pk/hiran-minar"],"answerable":true,"location":true}
+{"id":"extra-roman-javed","question":"Javed Manzil ka pata kis page par hai?","expected_urls":["https://tourism.punjab.gov.pk/javed-manzil"],"answerable":true,"location":true}
+{"id":"extra-roman-chauburji","question":"Chauburji ki tareekh ka zikr kis safhay par hai?","expected_urls":["https://tourism.punjab.gov.pk/chauburji"],"answerable":true,"location":false}
+{"id":"extra-roman-shalimar","question":"Shalimar Bagh Lahore mein kahan hain?","expected_urls":["https://tourism.punjab.gov.pk/shalimar-gardens"],"answerable":true,"location":true}
+{"id":"extra-roman-changa","question":"Changa Manga ka jungle kahan hai?","expected_urls":["https://tourism.punjab.gov.pk/changa-manga"],"answerable":true,"location":true}
+{"id":"extra-en-mughal","question":"Which tourism page describes the Mughal Period?","expected_urls":["https://tourism.punjab.gov.pk/mughal-period"],"answerable":true,"location":false}
+{"id":"extra-en-changa","question":"Where is the Changa Manga forest?","expected_urls":["https://tourism.punjab.gov.pk/changa-manga"],"answerable":true,"location":true}
+{"id":"extra-en-kallar","question":"Which page calls Kallar Kahar the Valley of Peacocks?","expected_urls":["https://tourism.punjab.gov.pk/kallar-kahar"],"answerable":true,"location":false}
+{"id":"extra-en-fort-munro","question":"Where is Fort Munro, the hill resort in Southern Punjab?","expected_urls":["https://tourism.punjab.gov.pk/fort-munro"],"answerable":true,"location":true}
+{"id":"extra-en-uch","question":"What does the Punjab Tourism site say about Uch Sharif?","expected_urls":["https://tourism.punjab.gov.pk/uch-sharif"],"answerable":true,"location":true}
+{"id":"extra-en-harappa","question":"Which page covers the ancient town of Harappa?","expected_urls":["https://tourism.punjab.gov.pk/harappa"],"answerable":true,"location":false}
+{"id":"extra-en-taxila","question":"Where can I find the Taxila Buddhist civilization page?","expected_urls":["https://tourism.punjab.gov.pk/taxila"],"answerable":true,"location":true}
+{"id":"extra-en-salt-range","question":"What information is on the Salt Range page?","expected_urls":["https://tourism.punjab.gov.pk/salt-range"],"answerable":true,"location":false}
+{"id":"extra-en-murree","question":"Where does the tourism website describe Murree and Galliat?","expected_urls":["https://tourism.punjab.gov.pk/murree-and-gallies"],"answerable":true,"location":true}
+{"id":"extra-en-rally","question":"Which page describes the Thal Jeep Rally?","expected_urls":["https://tourism.punjab.gov.pk/thal_jeep_rally"],"answerable":true,"location":false}
+{"id":"extra-noanswer-weather","question":"Will it rain in Lahore tomorrow afternoon?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-currency","question":"What is today's exchange rate from PKR to USD?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-cricket","question":"Which team won the most recent Pakistan Super League final?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-cooking","question":"Give me a recipe for chocolate cake.","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-health","question":"What medicine should I take for a migraine?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-mars","question":"How many moons does Mars have?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-crypto","question":"What is the current price of Bitcoin?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-flights","question":"Find me the cheapest flight from Lahore to London next week.","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-visa","question":"What documents are needed for a Canadian study visa?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-movie","question":"Who won the latest Academy Award for best actor?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-python","question":"How do I sort a list of dictionaries in Python?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-football","question":"What was the score in yesterday's Champions League match?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-stock","question":"Which company had the highest stock gain today?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-population","question":"What is the current population of Tokyo?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-phone","question":"Which smartphone has the best camera this year?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-math","question":"Solve this equation: 2x plus 5 equals 17.","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-music","question":"Who is the lead singer of the band Coldplay?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-gardening","question":"How often should I water tomato plants?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-school","question":"When does the next school term start in Ontario?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-translate","question":"Translate the French phrase bonjour into English.","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-urdu-weather","question":"آج رات لاہور میں موسم کیسا ہوگا؟","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-urdu-health","question":"سر درد کے لیے کون سی دوا استعمال کروں؟","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-urdu-cricket","question":"پاکستان سپر لیگ کا تازہ میچ کس نے جیتا؟","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-urdu-price","question":"آج سونے کی قیمت کیا ہے؟","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-urdu-translation","question":"لفظ کتاب کا انگریزی ترجمہ کیا ہے؟","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-roman-weather","question":"Kal Lahore mein barish hogi?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-roman-health","question":"Sar dard ke liye konsi dawa leni chahiye?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-roman-cricket","question":"PSL ka aaj ka match kis team ne jeeta?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-roman-price","question":"Aaj sone ka rate kya hai?","expected_urls":[],"answerable":false,"location":false}
+{"id":"extra-noanswer-roman-code","question":"Python mein list ko sort kaisay karte hain?","expected_urls":[],"answerable":false,"location":false}

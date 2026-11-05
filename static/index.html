@@ -1,0 +1,1193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#146c43">
+  <title>Punjab Tourism Assistant</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+    crossorigin="anonymous">
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: #17211b;
+      background: #f3f6f2;
+      font-synthesis: none;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 20px; }
+    .app {
+      width: min(780px, 100%); height: min(820px, calc(100vh - 40px)); height: min(820px, calc(100dvh - 40px));
+      min-height: min(480px, calc(100dvh - 24px)); display: flex; flex-direction: column; overflow: hidden;
+      background: #fff; border: 1px solid #dfe7df; border-radius: 20px;
+      box-shadow: 0 18px 55px #18332414;
+    }
+    header { flex: 0 0 auto; padding: 22px 26px; background: #146c43; color: white; }
+    header h1 { margin: 0 0 5px; font-size: 1.25rem; }
+    header p { margin: 0; font-size: .9rem; color: #e0f0e5; }
+    .site-location { flex: 0 1 48%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 20px; border-bottom: 1px solid #e8eee8; }
+    .site-location strong, .site-location span { display: block; }
+    .site-location strong { margin-bottom: 3px; }
+    .site-location span { color: #617067; font-size: .82rem; }
+    .site-location a { display: inline-block; margin-top: 5px; color: #146c43; font-size: .82rem; }
+    #site-map { height: 150px; margin-top: 9px; border-radius: 10px; }
+    .feature-panel { margin-top: 10px; padding: 10px; border: 1px solid #dfe7df; border-radius: 10px; background: #fff; }
+    .feature-panel summary { cursor: pointer; color: #146c43; font-weight: 650; }
+    .feature-panel p, .feature-panel .status { color: #617067; font-size: .82rem; }
+    .feature-panel button { min-height: 40px; margin: 4px 0; }
+    .feature-list { display: grid; gap: 8px; margin-top: 10px; }
+    .feature-item { padding: 9px; border: 1px solid #e3ebe4; border-radius: 8px; }
+    .feature-item strong, .feature-item span, .feature-item a { display: block; margin: 3px 0; }
+    .feature-item button { margin: 5px 0 0; }
+    .place-choices { max-height: 180px; overflow-y: auto; margin: 8px 0; padding: 8px; border: 1px solid #dfe7df; border-radius: 8px; }
+    .place-choice { display: flex; gap: 8px; align-items: flex-start; margin: 5px 0; font-size: .84rem; }
+    .place-choice input { margin-top: 3px; }
+    #itinerary-form { display: block; }
+    .trip-days { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+    .trip-days select { min-height: 38px; padding: 5px 8px; border: 1px solid #ccd8ce; border-radius: 8px; font: inherit; }
+    .itinerary-day { margin: 10px 0; padding: 10px; border-left: 3px solid #146c43; background: #f7faf7; }
+    .itinerary-day h3 { margin: 0 0 8px; font-size: .95rem; }
+    .itinerary-stop { margin: 8px 0; }
+    .location-result { margin-top: 12px; padding: 10px; border: 1px solid #dfe7df; border-radius: 10px; background: white; }
+    .location-result strong, .location-result span { display: block; }
+    .location-result span { margin-top: 4px; color: #617067; font-size: .82rem; }
+    .location-candidate { margin-top: 8px; padding: 9px; border: 1px solid #e3ebe4; border-radius: 8px; }
+    .location-candidate button, .location-candidate a { margin: 5px 8px 0 0; }
+    .location-map { height: 250px; margin-top: 9px; border-radius: 8px; }
+    .map-status { margin-top: 6px; color: #8a3c16; font-size: .82rem; }
+    .map-status[hidden] { display: none; }
+    #messages { flex: 1 1 0; min-height: 120px; overflow-y: auto; overscroll-behavior: contain; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .message { max-width: 88%; padding: 13px 16px; border-radius: 16px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .assistant { align-self: flex-start; background: #f0f4f0; border-bottom-left-radius: 5px; }
+    .user { align-self: flex-end; color: white; background: #146c43; border-bottom-right-radius: 5px; }
+    .sources { display: flex; flex-direction: column; gap: 5px; margin-top: 12px; font-size: .84rem; }
+    .sources a { color: #146c43; }
+    .image-matches { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 14px; }
+    .image-match { overflow: hidden; border: 1px solid #dfe7df; border-radius: 12px; background: white; box-shadow: 0 3px 12px #1833240a; }
+    .image-match img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: #edf2ed; }
+    .image-match strong, .image-match a, .image-match span { display: block; margin: 0 10px; font-size: .82rem; }
+    .image-match strong { padding: 10px 0 5px; }
+    .image-match a { width: fit-content; margin-bottom: 5px; color: #146c43; text-decoration: none; }
+    .image-match a:hover { text-decoration: underline; }
+    .image-match span { padding: 4px 0 10px; color: #617067; font-size: .76rem; }
+    .composer { flex: 0 0 auto; border-top: 1px solid #e8eee8; padding: 16px 20px 12px; }
+    form { display: flex; align-items: stretch; gap: 10px; }
+    .image-action { margin-top: 10px; min-height: 40px; }
+    textarea { flex: 1; min-width: 0; resize: none; min-height: 48px; max-height: 130px; padding: 13px 14px; font: inherit; border: 1px solid #ccd8ce; border-radius: 12px; outline: none; }
+    textarea:focus { border-color: #146c43; box-shadow: 0 0 0 3px #146c4319; }
+    button { border: 0; border-radius: 12px; padding: 0 20px; background: #146c43; color: white; font: inherit; font-weight: 650; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: wait; }
+    .note { margin: 9px 2px 0; color: #617067; font-size: .78rem; }
+    .error { color: #a12622; }
+    @media (max-width: 700px) {
+      body { display: block; padding: 0; }
+      .app { width: 100%; height: 100vh; height: 100dvh; min-height: 0; border: 0; border-radius: 0; box-shadow: none; }
+      header { padding: 15px 16px; }
+      .site-location { flex-basis: 42%; padding: 10px 14px; }
+      #site-map { height: 125px; }
+      .location-map { height: 220px; }
+      .feature-panel button { min-height: 44px; }
+      #messages { min-height: 100px; padding: 16px 14px; gap: 12px; }
+      .message { max-width: 94%; }
+      .composer { padding: 10px 12px max(10px, env(safe-area-inset-bottom)); }
+      form { gap: 8px; }
+      textarea { min-height: 46px; padding: 11px 12px; }
+      button { padding: 0 14px; }
+      .image-action { max-width: 100%; padding: 10px 14px; }
+      .note { line-height: 1.4; }
+      .trip-days { flex-wrap: wrap; }
+      .trip-days select { flex: 1; min-width: 70px; }
+      .trip-days button { min-height: 40px; }
+      .image-matches { grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); }
+    }
+    @media (max-height: 700px) {
+      .app { height: calc(100dvh - 24px); }
+      .site-location { flex-basis: 38%; }
+      #site-map { height: 105px; }
+      header { padding-top: 12px; padding-bottom: 12px; }
+      #messages { min-height: 90px; padding-top: 12px; padding-bottom: 12px; }
+      .composer { padding-top: 9px; padding-bottom: 8px; }
+      .note { margin-top: 5px; }
+    }
+    @media (max-width: 700px) and (max-height: 560px) {
+      .app { height: 100dvh; }
+      .site-location { flex-basis: 34%; }
+      #site-map { height: 90px; }
+      header p, .site-location > span:not(.map-status), .site-location > a { display: none; }
+      #messages { min-height: 72px; }
+    }
+    :root {
+      color: #18251e;
+      background: #eef3ef;
+      --green: #146c43;
+      --green-dark: #0c5032;
+      --green-soft: #e8f4ec;
+      --ink-muted: #617067;
+      --line: #dce7de;
+      --shadow: 0 24px 70px #173a2917, 0 3px 12px #173a2908;
+    }
+    body {
+      padding: 24px;
+      background:
+        radial-gradient(ellipse at 12% 8%, #dcebe0 0, transparent 34%),
+        radial-gradient(ellipse at 92% 92%, #e1ece4 0, transparent 36%),
+        #f4f7f4;
+    }
+    .app {
+      width: min(1280px, 100%);
+      height: min(900px, calc(100dvh - 48px));
+      min-height: min(560px, calc(100dvh - 24px));
+      display: grid;
+      grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      border: 1px solid #dce7de;
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 19px 26px;
+      background: linear-gradient(112deg, #0d5937 0%, #16764b 62%, #218153 100%);
+      border-bottom: 1px solid #ffffff20;
+    }
+    .brand-mark {
+      flex: 0 0 46px;
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border: 1px solid #ffffff45;
+      border-radius: 15px;
+      background: #ffffff19;
+      color: white;
+      font-size: .86rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+    .header-copy { min-width: 0; }
+    header h1 { margin: 0 0 3px; font-size: 1.2rem; letter-spacing: -.025em; }
+    header p { margin: 0; color: #e3f2e8; font-size: .88rem; }
+    header .eyebrow {
+      margin-bottom: 3px;
+      color: #c5e7d0;
+      font-size: .66rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .site-location {
+      grid-column: 1;
+      grid-row: 2 / 4;
+      min-height: 0;
+      padding: 20px 18px;
+      border-right: 1px solid var(--line);
+      border-bottom: 0;
+      background: #fbfdfb;
+    }
+    .site-location > strong { display: block; margin-bottom: 5px; font-size: .95rem; }
+    .site-location > span { display: block; margin-top: 5px; color: var(--ink-muted); font-size: .79rem; line-height: 1.5; }
+    .site-location > a { display: inline-block; margin-top: 8px; color: var(--green); font-size: .8rem; font-weight: 650; text-underline-offset: 3px; }
+    #site-map { height: 170px; margin-top: 14px; border: 1px solid var(--line); border-radius: 14px; }
+    .feature-panel {
+      margin-top: 13px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+      box-shadow: 0 3px 12px #173a2908;
+    }
+    .feature-panel[open] { background: linear-gradient(180deg, #fff, #fcfefc); }
+    .feature-panel summary {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: #24362b;
+      cursor: pointer;
+      font-size: .9rem;
+      font-weight: 720;
+      list-style: none;
+    }
+    .feature-panel summary::-webkit-details-marker { display: none; }
+    .feature-panel summary::before {
+      content: "+";
+      display: grid;
+      flex: 0 0 23px;
+      place-items: center;
+      width: 23px;
+      height: 23px;
+      border-radius: 8px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: 1rem;
+    }
+    .feature-panel[open] summary::before { content: "−"; }
+    .feature-panel p, .feature-panel .status { color: var(--ink-muted); font-size: .79rem; line-height: 1.55; }
+    .feature-panel button { min-height: 40px; margin: 5px 0; }
+    .feature-list { display: grid; gap: 8px; margin-top: 10px; }
+    .feature-item { padding: 11px; border: 1px solid #e3ebe4; border-radius: 11px; background: #fff; }
+    .feature-item strong, .feature-item span, .feature-item a { display: block; margin: 4px 0; }
+    .feature-item strong { font-size: .86rem; }
+    .feature-item span { color: var(--ink-muted); font-size: .78rem; }
+    .feature-item a { color: var(--green); font-size: .79rem; }
+    .place-choices {
+      max-height: 220px;
+      margin: 11px 0;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #fbfdfb;
+    }
+    .place-choice {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin: 0;
+      padding: 8px 3px;
+      border-bottom: 1px solid #edf2ee;
+      color: #33463a;
+      font-size: .82rem;
+      line-height: 1.4;
+      cursor: pointer;
+    }
+    .place-choice:last-child { border-bottom: 0; }
+    .place-choice input { flex: 0 0 auto; width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--green); }
+    .trip-days { display: grid; grid-template-columns: auto minmax(60px, 1fr) auto; align-items: center; gap: 9px; margin: 11px 0 2px; }
+    .trip-days label { color: #33463a; font-size: .82rem; font-weight: 650; }
+    .trip-days select { min-height: 40px; padding: 6px 10px; border: 1px solid #ccd8ce; border-radius: 10px; background: #fff; font: inherit; }
+    .itinerary-day { margin: 10px 0; padding: 13px; border: 1px solid var(--line); border-left: 4px solid var(--green); border-radius: 12px; background: #f8fbf8; }
+    .itinerary-day h3 { margin: 0 0 9px; color: var(--green-dark); font-size: .95rem; }
+    .location-result { margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 13px; background: white; }
+    .location-result span { margin-top: 4px; color: var(--ink-muted); font-size: .82rem; line-height: 1.5; }
+    .location-candidate { margin-top: 8px; padding: 11px; border: 1px solid #e3ebe4; border-radius: 11px; background: #fbfdfb; }
+    .location-map { height: 250px; margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; }
+    #messages {
+      grid-column: 2;
+      grid-row: 2;
+      min-height: 0;
+      padding: 27px clamp(20px, 4vw, 52px);
+      gap: 17px;
+      background: radial-gradient(ellipse at 50% 0, #f8fbf8 0, transparent 55%), #fff;
+    }
+    .message { max-width: min(78%, 720px); padding: 14px 17px; border: 1px solid transparent; border-radius: 18px; line-height: 1.6; box-shadow: 0 3px 12px #173a2908; }
+    .assistant { border-color: #e6ede7; border-bottom-left-radius: 6px; background: #f4f7f4; }
+    .user { border-bottom-right-radius: 6px; background: var(--green); }
+    .sources { gap: 6px; font-size: .82rem; }
+    .sources strong { color: #33463a; }
+    .sources a { width: fit-content; max-width: 100%; color: var(--green); overflow-wrap: anywhere; }
+    .image-match { border-color: var(--line); border-radius: 14px; box-shadow: 0 5px 18px #1833240c; }
+    .composer {
+      grid-column: 2;
+      grid-row: 3;
+      padding: 14px clamp(20px, 4vw, 52px) 15px;
+      border-top: 1px solid #e8eee8;
+      background: #fff;
+    }
+    #chat-form { display: flex; align-items: stretch; gap: 10px; }
+    .image-action { min-height: 38px; margin-top: 9px; padding: 0 13px; border: 1px solid #d8e6db; border-radius: 10px; background: #f5faf6; color: var(--green-dark); font-size: .82rem; }
+    textarea { min-height: 48px; padding: 13px 15px; border: 1px solid #cfddd1; border-radius: 13px; background: #fbfdfb; transition: border-color .16s ease, box-shadow .16s ease, background .16s ease; }
+    textarea:focus { border-color: var(--green); background: white; box-shadow: 0 0 0 4px #146c4318; }
+    button { min-height: 42px; border-radius: 11px; background: var(--green); font-weight: 680; transition: background .16s ease, transform .16s ease, box-shadow .16s ease; }
+    button:hover:not(:disabled) { background: var(--green-dark); box-shadow: 0 5px 14px #146c4328; transform: translateY(-1px); }
+    button:active:not(:disabled) { transform: translateY(0); }
+    :focus-visible { outline: 3px solid #e4a941; outline-offset: 3px; }
+    a { text-underline-offset: 3px; }
+    .note { margin: 8px 2px 0; color: var(--ink-muted); font-size: .75rem; line-height: 1.45; }
+    ::-webkit-scrollbar { width: 9px; height: 9px; }
+    ::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 10px; background: #cbd8ce; background-clip: padding-box; }
+    ::-webkit-scrollbar-thumb:hover { background-color: #a9bcae; }
+    @media (min-width: 701px) and (max-width: 980px) {
+      .app { grid-template-columns: minmax(260px, 30%) minmax(0, 1fr); }
+      .site-location { padding: 16px 13px; }
+      #messages, .composer { padding-right: 22px; padding-left: 22px; }
+    }
+    @media (max-width: 700px) {
+      body { display: block; padding: 0; }
+      .app {
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        min-height: 0;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 29dvh) minmax(110px, 1fr) auto;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      header { grid-column: 1; padding: 14px 17px; gap: 11px; }
+      .brand-mark { flex-basis: 40px; width: 40px; height: 40px; border-radius: 13px; }
+      header h1 { font-size: 1.04rem; }
+      header p { font-size: .78rem; }
+      header .eyebrow { font-size: .59rem; }
+      .site-location { grid-column: 1; grid-row: 2; padding: 12px 14px; border-right: 0; border-bottom: 1px solid var(--line); }
+      #site-map { height: 112px; margin-top: 9px; }
+      .feature-panel { margin-top: 9px; padding: 11px; }
+      .feature-panel button { min-height: 44px; }
+      #messages { grid-column: 1; grid-row: 3; min-height: 110px; padding: 15px 14px; gap: 12px; }
+      .message { max-width: 94%; padding: 12px 14px; font-size: .92rem; }
+      .composer { grid-column: 1; grid-row: 4; padding: 10px 13px max(10px, env(safe-area-inset-bottom)); }
+      #chat-form { gap: 8px; }
+      textarea { min-height: 46px; padding: 11px 12px; font-size: 16px; }
+      #send { padding: 0 15px; }
+      .image-action { max-width: 100%; }
+      .trip-days { grid-template-columns: auto minmax(55px, .7fr) auto; gap: 7px; }
+      .trip-days button { min-height: 42px; padding: 0 12px; font-size: .82rem; }
+      .image-matches { grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); }
+    }
+    @media (max-width: 700px) and (max-height: 620px) {
+      .app { grid-template-rows: auto minmax(0, 24dvh) minmax(90px, 1fr) auto; }
+      .site-location { padding-top: 8px; padding-bottom: 8px; }
+      #site-map { height: 82px; margin-top: 6px; }
+      header p { display: none; }
+      .composer { padding-top: 7px; padding-bottom: 7px; }
+      .note { margin-top: 4px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <span class="brand-mark" aria-hidden="true">PT</span>
+      <div class="header-copy">
+        <p class="eyebrow">Punjab · Pakistan</p>
+        <h1>Punjab Tourism Assistant</h1>
+        <p>Discover places, plan a trip, and get answers.</p>
+      </div>
+    </header>
+    <section class="site-location" aria-label="Department location">
+      <strong>Approximate Tourism Department building location</strong>
+      <span>8th Floor, Tower C, Old P&amp;D Building, Lahore</span>
+      <span>Approximate vicinity only; the exact building pin is not verified.</span>
+      <a href="https://www.google.com/maps/search/?api=1&amp;query=8th%20Floor%2C%20Tower%20C%2C%20Old%20P%26D%20Building%2C%20Lahore" target="_blank" rel="noopener noreferrer">Search this address in Google Maps</a>
+      <div id="site-map" aria-label="Map showing the Tourism Department location"></div>
+      <span id="site-map-status" class="map-status" role="status" aria-live="polite" hidden></span>
+      <details class="feature-panel">
+        <summary>Find nearby tourism places</summary>
+        <p>Your location stays in this browser. Unverified site coordinates are looked up approximately with OpenStreetMap Photon; your location is included in a Google Maps link only if you open directions.</p>
+        <button id="nearby-button" type="button">Find nearby places</button>
+        <span id="nearby-status" class="status" role="status" aria-live="polite">Nearby distances use verified place coordinates when available.</span>
+        <div id="nearby-list" class="feature-list"></div>
+      </details>
+      <details class="feature-panel">
+        <summary>Plan a Punjab trip</summary>
+        <p>Choose 1–7 trip days independently of the number of selected places. Extra days are left open; suggested time slots are not verified opening hours.</p>
+        <form id="itinerary-form">
+          <div id="place-choices" class="place-choices" aria-label="Choose tourism places"></div>
+          <div class="trip-days">
+            <label for="trip-days">Days</label>
+            <select id="trip-days" aria-label="Number of itinerary days"></select>
+            <button id="trip-submit" type="submit">Build itinerary</button>
+          </div>
+        </form>
+        <span id="itinerary-status" class="status" role="status" aria-live="polite"></span>
+        <div id="itinerary-result"></div>
+      </details>
+    </section>
+    <section id="messages" aria-live="polite" aria-label="Conversation">
+      <div class="message assistant">Hello! I can answer questions using the Punjab Tourism website pages. Aap Urdu ya English mein sawal kar sakte hain.</div>
+    </section>
+    <div class="composer">
+      <form id="chat-form">
+        <textarea id="question" rows="1" maxlength="2000" placeholder="Ask a question..." aria-label="Your question" required></textarea>
+        <button id="send" type="submit">Send</button>
+      </form>
+      <button id="image-button" class="image-action" type="button">Match a tourism image</button>
+      <input id="image-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+      <p class="note">Location lookup uses OpenStreetMap (no API key). Upload an image to find a visual match in the indexed site images.</p>
+    </div>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+    crossorigin="anonymous"></script>
+  <script>
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("question");
+    const messages = document.getElementById("messages");
+    const send = document.getElementById("send");
+    const imageButton = document.getElementById("image-button");
+    const imageInput = document.getElementById("image-input");
+    const nearbyButton = document.getElementById("nearby-button");
+    const nearbyStatus = document.getElementById("nearby-status");
+    const nearbyList = document.getElementById("nearby-list");
+    const placeChoices = document.getElementById("place-choices");
+    const itineraryForm = document.getElementById("itinerary-form");
+    const itineraryStatus = document.getElementById("itinerary-status");
+    const itineraryResult = document.getElementById("itinerary-result");
+    const tripDays = document.getElementById("trip-days");
+    const history = [];
+    let placeRecords = [];
+    let browserCoordinates = null;
+    const tileOptions = {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    };
+
+    function distanceKm(first, second) {
+      const radians = (degrees) => degrees * Math.PI / 180;
+      const latitudeDelta = radians(second.latitude - first.latitude);
+      const longitudeDelta = radians(second.longitude - first.longitude);
+      const value = Math.sin(latitudeDelta / 2) ** 2
+        + Math.cos(radians(first.latitude)) * Math.cos(radians(second.latitude))
+        * Math.sin(longitudeDelta / 2) ** 2;
+      return 6371 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+    }
+
+    function geolocationErrorMessage(error) {
+      if (error.code === error.PERMISSION_DENIED) {
+        return "Location permission was denied. You can still browse places without sharing your location.";
+      }
+      if (error.code === error.TIMEOUT) {
+        return "Your location request timed out. Please try again.";
+      }
+      return "Your location is unavailable on this device right now.";
+    }
+
+    function requestBrowserLocation(onSuccess, onFailure) {
+      if (!navigator.geolocation) {
+        onFailure("This browser does not support location access.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          browserCoordinates = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          };
+          onSuccess(browserCoordinates);
+        },
+        (error) => onFailure(geolocationErrorMessage(error)),
+        { enableHighAccuracy: false, maximumAge: 60000, timeout: 12000 }
+      );
+    }
+
+    function googleMapsDirectionsUrl(destination, origin = null) {
+      const url = new URL("https://www.google.com/maps/dir/");
+      url.searchParams.set("api", "1");
+      url.searchParams.set("destination", destination);
+      if (origin) {
+        url.searchParams.set("origin", `${origin.latitude},${origin.longitude}`);
+      }
+      return url.toString();
+    }
+
+    function addDistanceControl(container, destination) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "Calculate distance on this device";
+      const status = document.createElement("span");
+      status.className = "status";
+      const directions = document.createElement("a");
+      directions.target = "_blank";
+      directions.rel = "noopener noreferrer";
+      directions.textContent = "Open directions in Google Maps";
+      directions.hidden = true;
+      const showDistance = (origin) => {
+        const distance = distanceKm(origin, destination);
+        status.textContent =
+          `About ${distance.toFixed(1)} km from this device; calculated in this browser.`;
+        directions.href = googleMapsDirectionsUrl(
+          `${destination.latitude},${destination.longitude}`,
+          origin
+        );
+        directions.hidden = false;
+      };
+      button.addEventListener("click", () => {
+        button.disabled = true;
+        if (browserCoordinates) {
+          showDistance(browserCoordinates);
+          button.disabled = false;
+          return;
+        }
+        status.textContent = "Requesting location permission...";
+        requestBrowserLocation(
+          (origin) => {
+            showDistance(origin);
+            button.disabled = false;
+          },
+          (message) => {
+            status.textContent = message;
+            button.disabled = false;
+          }
+        );
+      });
+      container.append(button, status, directions);
+    }
+
+    function addMapTiles(map, status) {
+      let tileError = false;
+      const tiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", tileOptions);
+      tiles.on("loading", () => { tileError = false; });
+      tiles.on("tileerror", () => {
+        tileError = true;
+        status.hidden = false;
+        status.textContent =
+          "Map tiles are unavailable. Check your internet connection; place details and links still work.";
+      });
+      tiles.on("load", () => {
+        if (!tileError) {
+          status.hidden = true;
+          status.textContent = "";
+        }
+      });
+      tiles.addTo(map);
+    }
+
+    if (window.L) {
+      const siteMap = L.map("site-map", {
+        scrollWheelZoom: false,
+        zoomControl: true
+      }).setView([31.566667, 74.3042613], 15);
+      addMapTiles(siteMap, document.getElementById("site-map-status"));
+    } else {
+      const status = document.getElementById("site-map-status");
+      status.hidden = false;
+      status.textContent = "Map library or tiles could not be loaded; place details and links still work.";
+    }
+
+    function addMessage(role, text, sources = [], maps = [], location = null, metadata = null) {
+      const article = document.createElement("article");
+      article.className = `message ${role}`;
+      article.textContent = text;
+      if (sources.length || maps.length) {
+        const section = document.createElement("div");
+        section.className = "sources";
+        if (sources.length) {
+          const label = document.createElement("strong");
+          label.textContent = "Sources";
+          section.append(label);
+          for (const source of sources) {
+            const link = document.createElement("a");
+            link.href = source.url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = source.title || source.url;
+            section.append(link);
+          }
+        }
+        if (maps.length) {
+          const label = document.createElement("strong");
+          label.textContent = "Google Maps";
+          section.append(label);
+          for (const map of maps) {
+            const link = document.createElement("a");
+            link.href = map.url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = map.title || "Open location in Google Maps";
+            section.append(link);
+          }
+        }
+        article.append(section);
+      }
+      if (metadata?.answer_origin || metadata?.source_note) {
+        const provenance = document.createElement("div");
+        provenance.className = "sources";
+        const label = document.createElement("strong");
+        label.textContent = metadata.answer_origin === "external general knowledge"
+          ? "Unverified answer (no cited source)"
+          : `Answer source: ${metadata.answer_origin}`;
+        provenance.append(label);
+        if (metadata.source_note) {
+          const note = document.createElement("span");
+          note.textContent = metadata.source_note;
+          provenance.append(note);
+        }
+        if (metadata.external_search_url) {
+          const searchLink = document.createElement("a");
+          searchLink.href = metadata.external_search_url;
+          searchLink.target = "_blank";
+          searchLink.rel = "noopener noreferrer";
+          searchLink.textContent = "Search independent sources (not checked by assistant)";
+          provenance.append(searchLink);
+        }
+        article.append(provenance);
+      }
+      if (location) {
+        const locationCard = document.createElement("div");
+        locationCard.className = "location-result";
+        const status = document.createElement("span");
+        const photonCandidates = location.status === "ambiguous"
+          && Array.isArray(location.candidates)
+          && location.candidates.some((candidate) => Number.isFinite(candidate.confidence));
+        status.textContent = photonCandidates
+          ? "Several places match. Select a result to preview its approximate location. These OpenStreetMap Photon results are outside the Punjab Tourism website."
+          : location.message || `Location precision: ${location.precision || "search only"}.`;
+        locationCard.append(status);
+        if (location.status === "ambiguous" && Array.isArray(location.candidates)) {
+          const choices = document.createElement("div");
+          for (const candidate of location.candidates) {
+            const choice = document.createElement("div");
+            choice.className = "location-candidate";
+            const details = [candidate.name, candidate.city, candidate.district, candidate.country]
+              .filter(Boolean);
+            const title = document.createElement("strong");
+            title.textContent = [...new Set(details)].join(", ");
+            choice.append(title);
+            if (typeof candidate.source_url === "string"
+                && candidate.source_url.startsWith("https://tourism.punjab.gov.pk/")) {
+              const sourceLink = document.createElement("a");
+              sourceLink.href = candidate.source_url;
+              sourceLink.target = "_blank";
+              sourceLink.rel = "noopener noreferrer";
+              sourceLink.textContent = "Official Punjab Tourism source";
+              choice.append(sourceLink);
+            }
+            const hasCoordinates = Number.isFinite(candidate.latitude)
+              && Number.isFinite(candidate.longitude);
+            const selectButton = document.createElement("button");
+            selectButton.type = "button";
+            selectButton.textContent = hasCoordinates
+              ? `Show ${candidate.precision === "verified" ? "verified" : "approximate"} map`
+              : "Search this place with its district";
+            choice.append(selectButton);
+            if (hasCoordinates) {
+              const mapLink = document.createElement("a");
+              mapLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                `${candidate.latitude},${candidate.longitude}`
+              )}`;
+              mapLink.target = "_blank";
+              mapLink.rel = "noopener noreferrer";
+              mapLink.textContent = candidate.precision === "verified"
+                ? "Open verified place in Google Maps"
+                : "Open approximate result in Google Maps";
+              choice.append(mapLink);
+              selectButton.addEventListener("click", () => {
+                selectButton.disabled = true;
+                const coordinates = document.createElement("span");
+                coordinates.textContent =
+                  `Coordinates (${candidate.precision || "approximate"}): ${candidate.latitude}, ${candidate.longitude}`;
+                const map = document.createElement("div");
+                map.className = "location-map";
+                map.setAttribute("aria-label", `Map showing ${title.textContent}`);
+                const mapStatus = document.createElement("span");
+                mapStatus.className = "map-status";
+                mapStatus.hidden = true;
+                mapStatus.setAttribute("role", "status");
+                mapStatus.setAttribute("aria-live", "polite");
+                choice.append(coordinates, map, mapStatus);
+                if (window.L) {
+                  const resultMap = L.map(map, {
+                    scrollWheelZoom: false,
+                    zoomControl: true
+                  }).setView(
+                    [candidate.latitude, candidate.longitude],
+                    candidate.precision === "verified" ? 16 : 15
+                  );
+                  addMapTiles(resultMap, mapStatus);
+                  const popup = document.createElement("span");
+                  popup.textContent = `${title.textContent} (${candidate.precision || "approximate"})`;
+                  L.marker([candidate.latitude, candidate.longitude])
+                    .addTo(resultMap)
+                    .bindPopup(popup);
+                } else {
+                  mapStatus.hidden = false;
+                  mapStatus.textContent =
+                    "Map library or tiles could not be loaded; use the Google Maps link.";
+                }
+              });
+            } else {
+              selectButton.addEventListener("click", () => {
+                if (send.disabled) return;
+                const placeQuery = [candidate.name, candidate.district]
+                  .filter(Boolean).join(", ");
+                input.value = `Where is ${placeQuery}?`;
+                form.requestSubmit();
+              });
+            }
+            choices.append(choice);
+          }
+          locationCard.append(choices);
+        }
+        if (location.status === "found" &&
+            Number.isFinite(location.latitude) && Number.isFinite(location.longitude)) {
+          const name = document.createElement("strong");
+          name.textContent = location.label || "OpenStreetMap location";
+          const coordinates = document.createElement("span");
+          coordinates.textContent =
+            `Coordinates (${location.precision}): ${location.latitude}, ${location.longitude}`;
+          const copyButton = document.createElement("button");
+          copyButton.type = "button";
+          copyButton.textContent = "Copy coordinates";
+          const copyStatus = document.createElement("span");
+          copyStatus.className = "status";
+          copyStatus.setAttribute("role", "status");
+          copyButton.addEventListener("click", async () => {
+            if (!navigator.clipboard?.writeText) {
+              copyStatus.textContent = "Clipboard access is unavailable in this browser.";
+              return;
+            }
+            try {
+              await navigator.clipboard.writeText(
+                `${location.latitude}, ${location.longitude}`
+              );
+              copyStatus.textContent = "Coordinates copied.";
+            } catch {
+              copyStatus.textContent = "Could not copy coordinates; select them from the text above.";
+            }
+          });
+          const map = document.createElement("div");
+          map.className = "location-map";
+          map.setAttribute("aria-label", `Map showing ${name.textContent}`);
+          const mapStatus = document.createElement("span");
+          mapStatus.className = "map-status";
+          mapStatus.hidden = true;
+          mapStatus.setAttribute("role", "status");
+          mapStatus.setAttribute("aria-live", "polite");
+          locationCard.append(name, coordinates, copyButton, copyStatus);
+          if (location.district || location.city || location.country) {
+            const area = document.createElement("span");
+            area.textContent = [location.city, location.district, location.country]
+              .filter(Boolean).join(", ");
+            locationCard.append(area);
+          }
+          addDistanceControl(locationCard, {
+            latitude: location.latitude,
+            longitude: location.longitude
+          });
+          locationCard.append(map, mapStatus);
+          if (window.L) {
+            const resultMap = L.map(map, {
+              scrollWheelZoom: false,
+              zoomControl: true
+            }).setView(
+              [location.latitude, location.longitude], 16
+            );
+            addMapTiles(resultMap, mapStatus);
+            const popup = document.createElement("span");
+            popup.textContent = `${name.textContent} (${location.precision})`;
+            L.marker([location.latitude, location.longitude])
+              .addTo(resultMap)
+              .bindPopup(popup);
+          } else {
+            mapStatus.hidden = false;
+            mapStatus.textContent =
+              "Map library or tiles could not be loaded; place details and links still work.";
+          }
+        }
+        article.append(locationCard);
+      }
+      messages.append(article);
+      messages.scrollTop = messages.scrollHeight;
+      return article;
+    }
+
+    function addImageMatches(matches) {
+      if (!matches.length) return;
+      const section = document.createElement("div");
+      section.className = "image-matches";
+      for (const match of matches) {
+        const card = document.createElement("div");
+        card.className = "image-match";
+        const image = document.createElement("img");
+        image.src = match.image_url;
+        image.alt = match.alt || match.title;
+        image.loading = "lazy";
+        const name = document.createElement("strong");
+        name.textContent = match.place_name || match.title;
+        const sourceLink = document.createElement("a");
+        sourceLink.href = match.page_url;
+        sourceLink.target = "_blank";
+        sourceLink.rel = "noopener noreferrer";
+        sourceLink.textContent = "Open source page";
+        const resourceLink = document.createElement("a");
+        resourceLink.href = match.image_url;
+        resourceLink.target = "_blank";
+        resourceLink.rel = "noopener noreferrer";
+        resourceLink.textContent = "Open image resource";
+        const confirmButton = document.createElement("button");
+        confirmButton.type = "button";
+        confirmButton.textContent = "Confirm landmark & show map";
+        const mapLink = document.createElement("a");
+        mapLink.hidden = true;
+        mapLink.target = "_blank";
+        mapLink.rel = "noopener noreferrer";
+        mapLink.textContent = "Open unverified Google Maps search";
+        confirmButton.addEventListener("click", () => {
+          const mapUrl = new URL("https://www.google.com/maps/search/");
+          mapUrl.searchParams.set("api", "1");
+          mapUrl.searchParams.set("query", match.place_name || match.title);
+          mapLink.href = mapUrl.toString();
+          mapLink.hidden = false;
+          confirmButton.textContent = "Landmark confirmed";
+          confirmButton.disabled = true;
+        });
+        card.append(image, name, sourceLink, resourceLink, confirmButton, mapLink);
+        if (typeof match.confidence === "number") {
+          const confidence = document.createElement("span");
+          confidence.textContent = `${match.confidence}% visual similarity`;
+          card.append(confidence);
+        }
+        section.append(card);
+      }
+      messages.lastElementChild.append(section);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function normalizePlaceName(value) {
+      return String(value || "")
+        .normalize("NFKC")
+        .toLocaleLowerCase()
+        .replace(/[^\p{L}\p{N}]+/gu, " ")
+        .trim();
+    }
+
+    function isPunjabCoordinate(latitude, longitude) {
+      return Number.isFinite(latitude) && Number.isFinite(longitude)
+        && latitude >= 27.7 && latitude <= 34
+        && longitude >= 69.3 && longitude <= 75.5;
+    }
+
+    async function geocodeNearbyPlace(place) {
+      const url = new URL("https://photon.komoot.io/api/");
+      url.searchParams.set(
+        "q",
+        [place.name_en, place.district, "Punjab, Pakistan"].filter(Boolean).join(", ")
+      );
+      url.searchParams.set("limit", "5");
+      url.searchParams.set("lang", "en");
+      url.searchParams.set("bbox", "69.3,27.7,75.5,34.0");
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok) throw new Error("OpenStreetMap lookup failed.");
+        const result = await response.json();
+        const expectedNames = [place.name_en, place.name_ur, ...(place.aliases || [])]
+          .map(normalizePlaceName);
+        const match = (Array.isArray(result.features) ? result.features : [])
+          .map((feature) => {
+            const coordinates = feature?.geometry?.coordinates;
+            const properties = feature?.properties || {};
+            return {
+              latitude: coordinates?.[1],
+              longitude: coordinates?.[0],
+              candidateName: normalizePlaceName(
+                properties.name_en || properties.name || properties.localname
+              ),
+              country: properties.countrycode
+            };
+          })
+          .find((candidate) =>
+            candidate.country?.toLowerCase() === "pk"
+            && expectedNames.includes(candidate.candidateName)
+            && isPunjabCoordinate(candidate.latitude, candidate.longitude)
+          );
+        return match
+          ? { ...place, latitude: match.latitude, longitude: match.longitude, verified: false }
+          : null;
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
+    async function geocodeNearbyPlaces(places) {
+      const found = [];
+      let failed = 0;
+      let nextIndex = 0;
+      async function worker() {
+        while (nextIndex < places.length) {
+          const place = places[nextIndex++];
+          try {
+            const match = await geocodeNearbyPlace(place);
+            if (match) found.push(match);
+          } catch {
+            failed += 1;
+          }
+        }
+      }
+      await Promise.all(
+        Array.from({ length: Math.min(3, places.length) }, () => worker())
+      );
+      return { places: found, failed };
+    }
+
+    function renderNearbyPlaces(origin, candidates, approximate = false, failed = 0) {
+      nearbyList.replaceChildren();
+      if (!candidates.length) {
+        nearbyStatus.textContent = failed
+          ? `OpenStreetMap lookup failed for ${failed} place${failed === 1 ? "" : "s"}; no nearby results are available.`
+          : "OpenStreetMap found no matching Punjab place coordinates.";
+        return;
+      }
+      const nearest = candidates
+        .map((place) => ({
+          place,
+          distance: distanceKm(origin, {
+            latitude: place.latitude,
+            longitude: place.longitude
+          })
+        }))
+        .sort((first, second) => first.distance - second.distance)
+        .slice(0, 5);
+      nearbyStatus.textContent = approximate
+        ? `Approximate straight-line distances use OpenStreetMap Photon results, not verified site coordinates. Your location stays in this browser.${failed ? ` Lookup failed for ${failed} other place${failed === 1 ? "" : "s"}.` : ""}`
+        : "Distances are straight-line estimates calculated in this browser. Opening directions shares your location with Google Maps.";
+      for (const result of nearest) {
+        const card = document.createElement("div");
+        card.className = "feature-item";
+        const name = document.createElement("strong");
+        name.textContent = result.place.name_en;
+        const area = document.createElement("span");
+        area.textContent = [result.place.district, result.place.category]
+          .filter(Boolean).join(" · ");
+        const distance = document.createElement("span");
+        distance.textContent = `${result.distance.toFixed(1)} km straight-line distance`;
+        const mapSource = document.createElement("a");
+        const osmUrl = new URL("https://www.openstreetmap.org/");
+        osmUrl.searchParams.set("mlat", result.place.latitude);
+        osmUrl.searchParams.set("mlon", result.place.longitude);
+        osmUrl.hash = `map=17/${result.place.latitude}/${result.place.longitude}`;
+        mapSource.href = osmUrl.toString();
+        mapSource.target = "_blank";
+        mapSource.rel = "noopener noreferrer";
+        mapSource.textContent = approximate
+          ? "Approximate OpenStreetMap location"
+          : "OpenStreetMap location";
+        const directions = document.createElement("a");
+        directions.href = googleMapsDirectionsUrl(
+          `${result.place.latitude},${result.place.longitude}`,
+          origin
+        );
+        directions.target = "_blank";
+        directions.rel = "noopener noreferrer";
+        directions.textContent = "Directions in Google Maps";
+        card.append(name, area, distance, mapSource, directions);
+        nearbyList.append(card);
+      }
+    }
+
+    nearbyButton.addEventListener("click", () => {
+      const verifiedPlaces = placeRecords.filter((place) =>
+        place.verified === true
+        && Number.isFinite(place.latitude)
+        && Number.isFinite(place.longitude)
+      );
+      nearbyStatus.textContent = "Requesting location permission...";
+      nearbyButton.disabled = true;
+      requestBrowserLocation(async (origin) => {
+        try {
+          if (verifiedPlaces.length) {
+            renderNearbyPlaces(origin, verifiedPlaces);
+          } else {
+            nearbyStatus.textContent = "Looking up approximate place locations with OpenStreetMap...";
+            const result = await geocodeNearbyPlaces(placeRecords);
+            renderNearbyPlaces(origin, result.places, true, result.failed);
+          }
+        } catch (error) {
+          nearbyStatus.textContent =
+            error.message || "Nearby places could not be loaded.";
+        } finally {
+          nearbyButton.disabled = false;
+        }
+      }, (message) => {
+        nearbyStatus.textContent = message;
+        nearbyButton.disabled = false;
+      });
+    });
+
+    function renderPlaceChoices() {
+      placeChoices.replaceChildren();
+      for (const place of placeRecords) {
+        const label = document.createElement("label");
+        label.className = "place-choice";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = place.id;
+        const text = document.createElement("span");
+        text.textContent = [place.name_en, place.district]
+          .filter(Boolean).join(" — ");
+        label.append(checkbox, text);
+        placeChoices.append(label);
+      }
+    }
+
+    function renderItinerary(itinerary) {
+      itineraryResult.replaceChildren();
+      for (const day of itinerary.days) {
+        const section = document.createElement("section");
+        section.className = "itinerary-day";
+        const heading = document.createElement("h3");
+        heading.textContent = `Day ${day.day}`;
+        section.append(heading);
+        if (!day.items.length) {
+          const freeDay = document.createElement("p");
+          freeDay.textContent = "No selected stops — keep this day free for rest or travel.";
+          section.append(freeDay);
+        }
+        for (const stop of day.items) {
+          const item = document.createElement("div");
+          item.className = "itinerary-stop";
+          const title = document.createElement("strong");
+          title.textContent = `${stop.timing}: ${stop.place_name}`;
+          const description = document.createElement("p");
+          description.textContent = stop.description;
+          const source = document.createElement("a");
+          source.href = stop.source.url;
+          source.target = "_blank";
+          source.rel = "noopener noreferrer";
+          source.textContent = `Source: ${stop.source.title}`;
+          item.append(title, description, source);
+          section.append(item);
+        }
+        itineraryResult.append(section);
+      }
+      const note = document.createElement("p");
+      note.className = "status";
+      note.textContent = itinerary.note;
+      itineraryResult.append(note);
+    }
+
+    for (let day = 1; day <= 7; day += 1) {
+      const option = document.createElement("option");
+      option.value = String(day);
+      option.textContent = String(day);
+      tripDays.append(option);
+    }
+    itineraryForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const placeIds = [...placeChoices.querySelectorAll(
+        'input[type="checkbox"]:checked'
+      )].map((checkbox) => checkbox.value);
+      itineraryStatus.textContent = "";
+      itineraryResult.replaceChildren();
+      const submit = document.getElementById("trip-submit");
+      submit.disabled = true;
+      try {
+        const response = await fetch("/api/itinerary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ days: Number(tripDays.value), place_ids: placeIds })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "The itinerary could not be created.");
+        renderItinerary(result);
+      } catch (error) {
+        itineraryStatus.textContent =
+          error.message || "The itinerary could not be created.";
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    async function loadPlaceData() {
+      try {
+        const response = await fetch("/api/places");
+        const result = await response.json();
+        if (!response.ok || !Array.isArray(result.places)) {
+          throw new Error("Tourism place data could not be loaded.");
+        }
+        placeRecords = result.places;
+        renderPlaceChoices();
+      } catch (error) {
+        nearbyStatus.textContent =
+          error.message || "Tourism place data could not be loaded.";
+        itineraryStatus.textContent =
+          "Trip planning is unavailable until tourism place data loads.";
+      }
+    }
+    loadPlaceData();
+
+    async function matchTourismImage(file, label) {
+      if (!file || imageButton.disabled) return;
+      const userMessage = addMessage("user", `Find a tourism-site match for: ${label}`);
+      const preview = document.createElement("img");
+      preview.src = URL.createObjectURL(file);
+      preview.alt = "Image selected for matching";
+      preview.style.cssText = "display:block;max-width:220px;max-height:180px;margin-top:8px;border-radius:8px";
+      preview.onload = () => URL.revokeObjectURL(preview.src);
+      preview.onerror = () => URL.revokeObjectURL(preview.src);
+      userMessage.append(preview);
+      imageButton.disabled = true;
+      send.disabled = true;
+      const pending = addMessage("assistant", "Comparing with Punjab Tourism website images...");
+      try {
+        const upload = new FormData();
+        upload.append("image", file, label);
+        const response = await fetch("/api/image", { method: "POST", body: upload });
+        const result = await response.json();
+        pending.remove();
+        if (!response.ok) throw new Error(result.error || "The image could not be matched.");
+        addMessage("assistant", result.answer);
+        addImageMatches(result.matches || []);
+      } catch (error) {
+        pending.remove();
+        const message = addMessage("assistant", error.message || "The image could not be matched.");
+        message.classList.add("error");
+      } finally {
+        imageButton.disabled = false;
+        send.disabled = false;
+      }
+    }
+
+    imageButton.addEventListener("click", () => imageInput.click());
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files[0];
+      imageInput.value = "";
+      matchTourismImage(file, file?.name || "selected image");
+    });
+
+    input.addEventListener("paste", (event) => {
+      const items = [...(event.clipboardData?.items || [])];
+      const imageItem = items.find((item) => item.kind === "file" && item.type.startsWith("image/"));
+      if (!imageItem) return;
+      const file = imageItem.getAsFile();
+      if (!file) return;
+      event.preventDefault();
+      const extension = file.type.split("/")[1] || "png";
+      matchTourismImage(file, file.name || `pasted-image.${extension}`);
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const question = input.value.trim();
+      if (!question || send.disabled) return;
+      addMessage("user", question);
+      input.value = "";
+      send.disabled = true;
+      const pending = addMessage("assistant", "Looking through the tourism pages...");
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question, history: history.slice(-8) })
+        });
+        const result = await response.json();
+        pending.remove();
+        if (!response.ok) throw new Error(result.error || "The chatbot could not answer right now.");
+        const answer = addMessage(
+          "assistant", result.answer, result.sources || [], result.maps || [],
+          result.location || null, result
+        );
+        if (result.images?.length) {
+          messages.append(answer);
+          addImageMatches(result.images);
+        }
+        history.push({ role: "user", content: question });
+        history.push({ role: "assistant", content: result.answer });
+        if (history.length > 10) history.splice(0, history.length - 10);
+      } catch (error) {
+        pending.remove();
+        const message = addMessage("assistant", error.message || "The chatbot could not answer right now.");
+        message.classList.add("error");
+      } finally {
+        send.disabled = false;
+        input.focus();
+      }
+    });
+
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{"id":"en-rohtas-01","question":"What can visitors see at Rohtas Fort?","expected_urls":["https://tourism.punjab.gov.pk/"],"answerable":true,"location":false}
+{"id":"en-badshahi-02","question":"What does the tourism page say about Badshahi Mosque?","expected_urls":["https://tourism.punjab.gov.pk/badshahi-mosque"],"answerable":true,"location":false}
+{"id":"en-derawar-03","question":"Where does the tourism page place Derawar Fort?","expected_urls":["https://tourism.punjab.gov.pk/cholistan"],"answerable":true,"location":true}
+{"id":"en-adventures-04","question":"Which activities are listed under Outdoor Adventures?","expected_urls":["https://tourism.punjab.gov.pk/outdoor-adventures"],"answerable":true,"location":false}
+{"id":"en-shalimar-05","question":"Tell me about Shalimar Gardens.","expected_urls":["https://tourism.punjab.gov.pk/shalimar-gardens"],"answerable":true,"location":true}
+{"id":"en-rally-06","question":"What is the Cholistan Desert Rally?","expected_urls":["https://tourism.punjab.gov.pk/cholistan_desert_rally"],"answerable":true,"location":false}
+{"id":"en-taxila-07","question":"Which page describes Taxila's Buddhist civilization?","expected_urls":["https://tourism.punjab.gov.pk/taxila"],"answerable":true,"location":true}
+{"id":"en-katas-08","question":"What does the website say about Katas Raj?","expected_urls":["https://tourism.punjab.gov.pk/kartas-raj"],"answerable":true,"location":true}
+{"id":"en-changa-09","question":"Where can I read about Changa Manga forest?","expected_urls":["https://tourism.punjab.gov.pk/changa-manga"],"answerable":true,"location":true}
+{"id":"en-hiran-10","question":"What does the tourism page say about Hiran Minar?","expected_urls":["https://tourism.punjab.gov.pk/hiran-minar"],"answerable":true,"location":true}
+{"id":"ur-badshahi-11","question":"بادشاہی مسجد کے بارے میں ویب سائٹ کیا بتاتی ہے؟","expected_urls":["https://tourism.punjab.gov.pk/badshahi-mosque"],"answerable":true,"location":false}
+{"id":"ur-derawar-12","question":"دراوڑ قلعہ کہاں واقع ہے؟","expected_urls":["https://tourism.punjab.gov.pk/cholistan"],"answerable":true,"location":true}
+{"id":"ur-shalimar-13","question":"شالامار باغ کے بارے میں بتائیں۔","expected_urls":["https://tourism.punjab.gov.pk/shalimar-gardens"],"answerable":true,"location":true}
+{"id":"ur-harappa-14","question":"ہڑپہ کے بارے میں کیا معلومات ہیں؟","expected_urls":["https://tourism.punjab.gov.pk/harappa"],"answerable":true,"location":true}
+{"id":"ur-rohtas-15","question":"قلعہ روہتاس کی تاریخ کے متعلق کیا بتایا گیا ہے؟","expected_urls":["https://tourism.punjab.gov.pk/"],"answerable":true,"location":false}
+{"id":"ur-rally-16","question":"چولستان ڈیزرٹ ریلی کیا ہے؟","expected_urls":["https://tourism.punjab.gov.pk/cholistan_desert_rally"],"answerable":true,"location":false}
+{"id":"ur-hiran-17","question":"ہیرن مینار کے بارے میں معلومات دیں۔","expected_urls":["https://tourism.punjab.gov.pk/hiran-minar"],"answerable":true,"location":true}
+{"id":"ur-taxila-18","question":"ٹیکسلا کے تاریخی مقام کے بارے میں بتائیں۔","expected_urls":["https://tourism.punjab.gov.pk/taxila"],"answerable":true,"location":true}
+{"id":"roman-badshahi-19","question":"Badshahi Masjid k bary mein kya maloomat hain?","expected_urls":["https://tourism.punjab.gov.pk/badshahi-mosque"],"answerable":true,"location":false}
+{"id":"roman-derawar-20","question":"Derawar Qila Cholistan mein kahan hai?","expected_urls":["https://tourism.punjab.gov.pk/cholistan"],"answerable":true,"location":true}
+{"id":"roman-shalimar-21","question":"Shalimar Bagh kis liye mashhoor hai?","expected_urls":["https://tourism.punjab.gov.pk/shalimar-gardens"],"answerable":true,"location":true}
+{"id":"roman-hiran-22","question":"Hiran Minar kahan hai?","expected_urls":["https://tourism.punjab.gov.pk/hiran-minar"],"answerable":true,"location":true}
+{"id":"roman-taxila-23","question":"Taxila ke bare mein batao.","expected_urls":["https://tourism.punjab.gov.pk/taxila"],"answerable":true,"location":true}
+{"id":"roman-changa-24","question":"Changa Manga jungle ka zikr kis page par hai?","expected_urls":["https://tourism.punjab.gov.pk/changa-manga"],"answerable":true,"location":true}
+{"id":"roman-rally-25","question":"Cholistan jeep rally ke event ki tafseel batao.","expected_urls":["https://tourism.punjab.gov.pk/cholistan_desert_rally"],"answerable":true,"location":false}
+{"id":"en-bhong-26","question":"What information is available about Bhong Mosque?","expected_urls":["https://tourism.punjab.gov.pk/bhong-mosque"],"answerable":true,"location":true}
+{"id":"en-kallar-27","question":"What is Kallar Kahar known for?","expected_urls":["https://tourism.punjab.gov.pk/kallar-kahar"],"answerable":true,"location":true}
+{"id":"en-fortmunro-28","question":"What does the page say about Fort Munro?","expected_urls":["https://tourism.punjab.gov.pk/fort-munro"],"answerable":true,"location":true}
+{"id":"en-uchsharif-29","question":"Tell me about Uch Sharif.","expected_urls":["https://tourism.punjab.gov.pk/uch-sharif"],"answerable":true,"location":true}
+{"id":"en-gardens-ambiguous-30","question":"Which Punjab Tourism pages mention gardens?","expected_urls":["https://tourism.punjab.gov.pk/shalimar-gardens","https://tourism.punjab.gov.pk/kamran-garden","https://tourism.punjab.gov.pk/bagh-e-safa"],"answerable":true,"location":false,"ambiguous":true}
+{"id":"en-mosques-ambiguous-31","question":"Which pages cover mosques in Punjab?","expected_urls":["https://tourism.punjab.gov.pk/badshahi-mosque","https://tourism.punjab.gov.pk/shahi-masjid","https://tourism.punjab.gov.pk/derawar-mosque"],"answerable":true,"location":false,"ambiguous":true}
+{"id":"ur-mosques-ambiguous-32","question":"پنجاب کی مساجد کے بارے میں کون سے صفحات ہیں؟","expected_urls":["https://tourism.punjab.gov.pk/badshahi-mosque","https://tourism.punjab.gov.pk/shahi-masjid","https://tourism.punjab.gov.pk/derawar-mosque"],"answerable":true,"location":false,"ambiguous":true}
+{"id":"roman-gardens-ambiguous-33","question":"Punjab ke baghon ke bare mein website par kya hai?","expected_urls":["https://tourism.punjab.gov.pk/shalimar-gardens","https://tourism.punjab.gov.pk/kamran-garden","https://tourism.punjab.gov.pk/bagh-e-safa"],"answerable":true,"location":false,"ambiguous":true}
+{"id":"en-family-34","question":"What family activities does the tourism website list?","expected_urls":["https://tourism.punjab.gov.pk/family-activities"],"answerable":true,"location":false}
+{"id":"en-department-35","question":"What is the role of the Tourism Department?","expected_urls":["https://tourism.punjab.gov.pk/"],"answerable":true,"location":false}
+{"id":"noanswer-worldcup-36","question":"Who won the 2024 cricket World Cup?","expected_urls":[],"answerable":false,"location":false}
+{"id":"noanswer-chemistry-37","question":"What is the chemical symbol for gold?","expected_urls":[],"answerable":false,"location":false}
+{"id":"noanswer-space-38","question":"How many planets orbit Proxima Centauri?","expected_urls":[],"answerable":false,"location":false}
+{"id":"noanswer-math-39","question":"Explain quantum computing in simple terms.","expected_urls":[],"answerable":false,"location":false}
+{"id":"noanswer-literature-40","question":"Who wrote Hamlet?","expected_urls":[],"answerable":false,"location":false}
