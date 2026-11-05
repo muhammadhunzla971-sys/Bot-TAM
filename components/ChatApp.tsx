@@ -161,12 +161,21 @@ export default function ChatApp({ places, pageCount }: { places: PublicPlace[]; 
 
   const current = VIEWS.find((item) => item.id === view) ?? VIEWS[0];
 
+  useLayoutEffect(() => {
+    document.querySelector<HTMLElement>(".view:not([hidden])")?.scrollTo({ top: 0 });
+    if (view === "chat") threadRef.current?.scrollTo({ top: 0 });
+  }, [view]);
+
   // Follow the conversation: show the newest question and typing indicator,
   // then bring the start of each new answer into view (long answers with maps
   // would otherwise scroll their opening lines out of sight).
   useEffect(() => {
     const thread = threadRef.current;
     if (!thread) return;
+    if (messages.length === 0 && !busy) {
+      thread.scrollTo({ top: 0 });
+      return;
+    }
     const last = messages[messages.length - 1];
     if (last?.role === "assistant" && !busy) {
       const element = thread.querySelector<HTMLElement>(`[data-message-id="${last.id}"]`);

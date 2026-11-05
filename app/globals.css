@@ -507,3 +507,30 @@ kbd { padding: 1px 5px; border: 1px solid var(--border-strong); border-bottom-wi
   .hide-sm { display: none; }
   .topbar-actions .btn-sm { width: 36px; padding: 0; }
 }
+
+@media (max-width: 560px) {
+  .topbar { padding-inline: 12px; }
+  .topbar-title p { display: none; }
+  .thread-inner { padding: 16px 12px 20px; gap: 20px; }
+  .welcome { padding-top: 8px; }
+  .welcome h2 { font-size: clamp(1.8rem, 8vw, 2.25rem); }
+  .section-label { margin-top: 24px; }
+  .composer-wrap { padding-inline: 8px; }
+  .composer { gap: 4px; padding: 6px; border-radius: 15px; }
+  .composer .btn-icon { flex: 0 0 40px; }
+  .page { padding: 16px 12px 32px; }
+  .panel { padding: 14px; }
+  .hero-card { gap: 12px; padding: 16px; }
+  .hero-card .btn { width: 100%; }
+  .nearby-item { gap: 10px; padding: 12px; }
+  .distance { margin-left: auto; }
+  .office-map #site-map { height: clamp(240px, 45vh, 320px); }
+  .tabbar { padding-right: max(6px, env(safe-area-inset-right)); padding-left: max(6px, env(safe-area-inset-left)); }
+}
+
+@media (pointer: coarse) {
+  .btn { min-height: 44px; }
+  .btn-sm { min-height: 40px; }
+  .tab { min-height: 52px; }
+  .segmented button { min-height: 44px; }
+}

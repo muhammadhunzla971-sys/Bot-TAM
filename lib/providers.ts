@@ -247,11 +247,7 @@ export async function callGemini(
 ): Promise<{ answer: string; sources: Source[] }> {
   const { sources, entries, tourismFallback } = buildContext(documents);
   const recent = history.slice(-MAX_HISTORY_MESSAGES);
-  const conversation = recent
-    .map((message) => `${message.role === "user" ? "Visitor" : "Assistant"}: ${message.content}`)
-    .join("\n\n");
   const prompt =
-    (conversation ? `Recent conversation:\n${conversation}\n\n` : "") +
     `Visitor question:\n${question}\n\n` +
     tourismFallback +
     "Official-page excerpts:\n" +

@@ -131,19 +131,10 @@ export async function answerChat(body: unknown): Promise<ChatResponse> {
     };
   }
 
-  let location: ChatResponse["location"] = undefined;
-  if (mapSource) {
+  let locationPromise: ReturnType<typeof lookupLocation> | null = null;
+  if (mapSource && !wantsImages) {
     const place = identifiedPlace ? identifiedPlace.name_en : mapSource.title.replace(/^Google Maps: /, "");
-    location = await lookupLocation(place, places);
-    if (location.status === "found" && location.latitude !== undefined && location.longitude !== undefined) {
-      mapSource.url = googleMapsSearchUrl(`${location.latitude},${location.longitude}`);
-      location.sources = [
-        {
-          title: "OpenStreetMap location (via Photon; outside Punjab Tourism website)",
-          url: openStreetMapUrl(location.latitude, location.longitude),
-        },
-      ];
-    }
+    locationPromise = lookupLocation(place, places);
   }
 
   const config = providerConfig();
@@ -233,6 +224,18 @@ export async function answerChat(body: unknown): Promise<ChatResponse> {
     result = localCorpusAnswer(contextualQuestion, matchedDocuments);
     usedLocalFallback = true;
   }
+
+  const location = locationPromise ? await locationPromise : undefined;
+  if (location?.status === "found" && location.latitude !== undefined && location.longitude !== undefined) {
+    if (mapSource) mapSource.url = googleMapsSearchUrl(`${location.latitude},${location.longitude}`);
+    location.sources = [
+      {
+        title: "OpenStreetMap location (via Photon; outside Punjab Tourism website)",
+        url: openStreetMapUrl(location.latitude, location.longitude),
+      },
+    ];
+  }
+
   if (pageImages.length) result.images = pageImages;
   if (mapSource) result.maps = [mapSource];
   if (location) result.location = location;
