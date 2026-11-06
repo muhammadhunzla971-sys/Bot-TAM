@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from hashlib import sha256
 from html.parser import HTMLParser
+from http.client import IncompleteRead, RemoteDisconnected
 import json
 import os
 from pathlib import Path
@@ -19,7 +20,7 @@ import tempfile
 import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import urldefrag, urljoin, urlsplit, urlunsplit
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 from urllib.robotparser import RobotFileParser
 from typing import TextIO
 
@@ -38,6 +39,7 @@ DEFAULT_USER_AGENT = (
 )
 MAX_RESPONSE_BYTES = 5 * 1024 * 1024
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
+PAGE_FETCH_ATTEMPTS = 3
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 BLOCKED_EXTENSIONS = {
     ".7z", ".avi", ".bmp", ".css", ".csv", ".doc", ".docx", ".gif",
@@ -238,6 +240,7 @@ def load_robots(
     user_agent: str,
     allow_unavailable: bool,
     timeout: int,
+    bypass_proxy: bool = False,
 ) -> RobotFileParser:
     robots_url = urljoin(base_url, "/robots.txt")
     robots_parts = urlsplit(robots_url)
@@ -246,9 +249,36 @@ def load_robots(
     parser = RobotFileParser(robots_url)
     request = Request(robots_url, headers={"User-Agent": user_agent})
     try:
-        opener = build_opener(SameHostRedirectHandler(robots_parts.hostname.lower()))
+        opener = build_opener(
+            *(
+                [ProxyHandler({}), SameHostRedirectHandler(robots_parts.hostname.lower())]
+                if bypass_proxy
+                else [SameHostRedirectHandler(robots_parts.hostname.lower())]
+            )
+        )
         with opener.open(request, timeout=timeout) as response:
-            parser.parse(response.read(256 * 1024).decode("utf-8", "replace").splitlines())
+            payload = response.read(256 * 1024)
+            headers = getattr(response, "headers", None)
+            content_type = (
+                headers.get_content_type().lower()
+                if headers is not None and hasattr(headers, "get_content_type")
+                else ""
+            )
+            if content_type == "text/html" or payload.lstrip().lower().startswith((b"<!doctype html", b"<html")):
+                if not allow_unavailable:
+                    raise RuntimeError(
+                        "robots.txt returned an HTML page instead of a crawl policy; "
+                        "the crawler stopped. Only use --allow-robots-unavailable "
+                        "with site-owner authorization."
+                    )
+                print(
+                    "WARNING: robots.txt returned HTML; proceeding only because "
+                    "--allow-robots-unavailable was supplied. Verify site-owner authorization.",
+                    file=sys.stderr,
+                )
+                parser.parse([])
+            else:
+                parser.parse(payload.decode("utf-8", "replace").splitlines())
     except HTTPError as error:
         if error.code == 404:
             parser.parse([])
@@ -275,9 +305,9 @@ def load_robots(
 
 
 def fetch_page(
-    url: str, user_agent: str, allowed_host: str, timeout: int
+    url: str, user_agent: str, allowed_host: str, timeout: int,
+    bypass_proxy: bool = False,
 ) -> tuple[str, str] | None:
-    opener = build_opener(SameHostRedirectHandler(allowed_host))
     request = Request(
         url,
         headers={
@@ -285,24 +315,45 @@ def fetch_page(
             "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.1",
         },
     )
-    with opener.open(request, timeout=timeout) as response:
-        final_url = normalize_url(response.geturl(), allowed_host)
-        if final_url is None:
-            raise RuntimeError(f"Redirected to a URL outside the allowed site: {response.geturl()}")
-        content_type = response.headers.get_content_type().lower()
-        if content_type not in {"text/html", "application/xhtml+xml"}:
-            return None
-        payload = response.read(MAX_RESPONSE_BYTES + 1)
-        if len(payload) > MAX_RESPONSE_BYTES:
-            raise RuntimeError(f"Page exceeded the 5 MiB response limit: {url}")
-        charset = response.headers.get_content_charset() or "utf-8"
-        return final_url, payload.decode(charset, "replace")
+    last_error: IncompleteRead | RemoteDisconnected | None = None
+    for attempt in range(PAGE_FETCH_ATTEMPTS):
+        opener = build_opener(
+            *( [ProxyHandler({}), SameHostRedirectHandler(allowed_host)]
+               if bypass_proxy else [SameHostRedirectHandler(allowed_host)] )
+        )
+        try:
+            with opener.open(request, timeout=timeout) as response:
+                final_url = normalize_url(response.geturl(), allowed_host)
+                if final_url is None:
+                    raise RuntimeError(
+                        f"Redirected to a URL outside the allowed site: {response.geturl()}"
+                    )
+                content_type = response.headers.get_content_type().lower()
+                if content_type not in {"text/html", "application/xhtml+xml"}:
+                    return None
+                payload = response.read(MAX_RESPONSE_BYTES + 1)
+                if len(payload) > MAX_RESPONSE_BYTES:
+                    raise RuntimeError(f"Page exceeded the 5 MiB response limit: {url}")
+                charset = response.headers.get_content_charset() or "utf-8"
+                return final_url, payload.decode(charset, "replace")
+        except (IncompleteRead, RemoteDisconnected) as error:
+            last_error = error
+            if attempt + 1 >= PAGE_FETCH_ATTEMPTS:
+                raise
+            time.sleep(0.25 * (2 ** attempt))
+    if last_error is not None:
+        raise last_error
+    return None
 
 
 def fetch_image(
-        url: str, user_agent: str, allowed_host: str, timeout: int
+        url: str, user_agent: str, allowed_host: str, timeout: int,
+        bypass_proxy: bool = False,
 ) -> tuple[str, bytes] | None:
-        opener = build_opener(SameHostRedirectHandler(allowed_host))
+        opener = build_opener(
+            *( [ProxyHandler({}), SameHostRedirectHandler(allowed_host)]
+               if bypass_proxy else [SameHostRedirectHandler(allowed_host)] )
+        )
         request = Request(url, headers={"User-Agent": user_agent, "Accept": "image/*"})
         with opener.open(request, timeout=timeout) as response:
             final_url = normalize_image_url(response.geturl(), allowed_host)
@@ -328,7 +379,8 @@ def crawl(args: argparse.Namespace) -> int:
         raise RuntimeError("--base-url is not a valid HTTPS URL.")
 
     robots = load_robots(
-        args.base_url, args.user_agent, args.allow_robots_unavailable, args.timeout
+        args.base_url, args.user_agent, args.allow_robots_unavailable, args.timeout,
+        args.no_proxy,
     )
     queue = deque([start_url])
     queued = {start_url}
@@ -355,12 +407,18 @@ def crawl(args: argparse.Namespace) -> int:
                 time.sleep(wait)
             last_request = time.monotonic()
             try:
-                fetched = fetch_page(url, args.user_agent, host, args.timeout)
+                fetched = fetch_page(url, args.user_agent, host, args.timeout, args.no_proxy)
             except HTTPError as error:
                 if error.code == 404:
                     print(f"Not found (skipping): {url}", file=sys.stderr)
                     continue
                 raise RuntimeError(f"Page request failed (HTTP {error.code}): {url}") from error
+            except (IncompleteRead, RemoteDisconnected) as error:
+                print(
+                    f"Incomplete response after {PAGE_FETCH_ATTEMPTS} attempts (skipping): {url}: {error}",
+                    file=sys.stderr,
+                )
+                continue
             except (TimeoutError, URLError) as error:
                 raise RuntimeError(f"Page request failed for {url}: {error}") from error
             if fetched is None:
@@ -373,9 +431,10 @@ def crawl(args: argparse.Namespace) -> int:
             document = page.document()
             image_records: list[dict[str, str]] = []
             title = str(document.get("title") or final_url)
-            document["text_embedding"] = text_embedding(
-                f"A photograph of {title}. {document.get('description', '')}"
-            )
+            if not args.skip_text_embeddings:
+                document["text_embedding"] = text_embedding(
+                    f"A photograph of {title}. {document.get('description', '')}"
+                )
             seen_images: set[str] = set()
             for image in document["images"]:
                 image_url = normalize_image_url(
@@ -410,7 +469,7 @@ def crawl(args: argparse.Namespace) -> int:
                 last_request = time.monotonic()
                 try:
                     fetched_image = fetch_image(
-                        image_url, args.user_agent, host, args.timeout
+                        image_url, args.user_agent, host, args.timeout, args.no_proxy
                     )
                     if fetched_image is None:
                         continue
@@ -475,8 +534,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--max-images", type=int, default=500,
         help="Maximum same-site reference images to index (default: 500)",
     )
+    parser.add_argument(
+        "--skip-text-embeddings", action="store_true",
+        help="Do not load the image model to create title embeddings",
+    )
     parser.add_argument("--delay", type=float, default=1.0, help="Seconds between requests (default: 1)")
     parser.add_argument("--timeout", type=int, default=25, help="Request timeout in seconds (default: 25)")
+    parser.add_argument(
+        "--no-proxy", action="store_true",
+        help="Connect directly, ignoring HTTP(S)_PROXY environment variables",
+    )
     parser.add_argument("--user-agent", default=DEFAULT_USER_AGENT, help="Descriptive crawler user-agent")
     parser.add_argument(
         "--allow-robots-unavailable",

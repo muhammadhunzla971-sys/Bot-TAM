@@ -117,6 +117,29 @@ class CorpusTests(unittest.TestCase):
             "https://tourism.punjab.gov.pk/mughal",
         )
 
+    def test_official_source_precedes_matching_wikipedia_background(self):
+        documents = [
+            {
+                "title": "Derawar Fort", "text": "Derawar Fort is in Cholistan.",
+                "url": "https://en.wikipedia.org/wiki/Derawar_Fort",
+                "source_group": "secondary", "source_priority": 100,
+            },
+            {
+                "title": "Derawar Fort", "text": "Derawar Fort is in Cholistan.",
+                "url": "https://tourism.punjab.gov.pk/derawar-fort",
+                "source_group": "official", "source_priority": 1,
+            },
+        ]
+        self.path.write_text(
+            "".join(json.dumps(item) + "\n" for item in documents),
+            encoding="utf-8",
+        )
+        corpus = Corpus(self.path)
+        self.assertEqual(
+            corpus.search("Derawar Fort", limit=1)[0]["url"],
+            "https://tourism.punjab.gov.pk/derawar-fort",
+        )
+
     def test_hybrid_search_fuses_semantic_rank_with_bm25(self):
         corpus = Corpus(self.path, hybrid_enabled=True)
 
@@ -1491,7 +1514,8 @@ class ChatApiTests(unittest.TestCase):
         self.assertEqual(result["sources"], [])
         self.assertEqual(
             result["source_note"],
-            "Unverified: This answer is not supported by the Punjab Tourism website, "
+            "Unverified: This answer is not supported by the official government "
+            "tourism and heritage sources, "
             "and no independent source was checked. Please verify it before relying "
             "on it; opening hours, prices, and distances will not be stated unless "
             "a source is cited.",

@@ -71,7 +71,7 @@ Optional local multilingual ONNX embeddings are fused with BM25 using
 reciprocal rank fusion. Tourism answers are grounded in retrieved pages with
 links to their sources; generated claims that fail grounding are replaced by a
 source excerpt. Unrelated general-knowledge answers are labeled as outside the
-Punjab Tourism website and are not independently verified.
+official government source pages and are not independently verified.
 If the AI provider is unavailable or no API key is configured, the chatbot
 tries Groq if configured, then answers with the best directly relevant
 sentence from the local pages and includes its source link; if nothing matches,
@@ -159,6 +159,53 @@ information in visitor questions.
 
 ## Refresh the source data
 
+The multi-source importer reads official URLs from `siteslink.md`, crawls each
+HTTPS host independently, and adds English and Urdu Wikipedia background
+articles as secondary sources. TDCP uses rendered Chromium pages because its
+public pages are a JavaScript app without server-rendered text. Install the
+optional browser dependencies once:
+
+```powershell
+python -m venv .venv                 # only if .venv does not exist yet
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r .\requirements-scraping.txt
+python -m playwright install chromium
+```
+
+Run the importer from that activated environment so its TDCP subprocess uses
+the same Python installation. A single incomplete page response is retried up
+to three times; if it still fails, that page is skipped and the rest of the
+site crawl continues.
+
+Official records carry a source name and priority (the order
+listed in `siteslink.md`); Wikipedia records are marked secondary and the
+chatbot favors official evidence when both kinds are relevant. Each site's
+`robots.txt` is checked; a missing or blocked policy file stops that site's
+crawl. Unvisited records stay in the corpus when a page cap is used, and
+records from unreachable sources are retained.
+
+Run a full refresh with:
+
+```powershell
+python .\ingest_sources.py --no-proxy --max-pages-per-site 100
+```
+
+`--only-host tdcp.gop.pk` refreshes TDCP alone; `--skip-official` refreshes
+Wikipedia only. `--no-proxy` bypasses HTTP proxy environment settings for this
+run.
+
+If a site's `robots.txt` returns 403 or an HTML error page, it is skipped by
+default. Only run `--allow-robots-unavailable` when you have site-owner
+authorization for those sources; the importer still obeys any valid policy.
+
+The importer does not download images from these additional sites, so image
+matching remains limited to image records already in the corpus. Use
+`--skip-wikipedia` to refresh only the listed official domains. The standalone
+`scrape_tourism.py` command below remains available for a single-site crawl.
+The provided DTS link is HTTP-only from this environment; those records are
+marked as HTTP in their metadata and should be checked against another official
+source before relying on changing details.
+
 This Python scraper collects public HTML pages from
 `https://tourism.punjab.gov.pk/` and writes one chatbot-ready JSON document per
 line. It stays on the configured HTTPS host, follows `robots.txt`, uses a
@@ -178,6 +225,13 @@ The output is `data\tourism_pages.jsonl`. Each JSONL row contains `url`,
 `canonical_url`, `title`, `description`,
 `headings`, `text`, page/image CLIP embeddings, `images` (same-site image URL,
 alt text, and visual hash), `content_sha256`, and `crawled_at`.
+
+This standalone command replaces `data\tourism_pages.jsonl` with the Punjab
+Tourism site crawl. If you have already built the multi-site corpus with
+`ingest_sources.py`, do not run this command against the default output path;
+it would replace the other sites' records. For a test crawl, use a separate
+output such as `--output .\data\sample.jsonl`. Use `ingest_sources.py` to
+refresh the merged multi-site corpus.
 
 The site currently returns HTTP 403 for `/robots.txt`. By default, the scraper
 stops rather than guessing the site's crawling policy. If you administer this

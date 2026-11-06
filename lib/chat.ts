@@ -257,25 +257,44 @@ export async function answerChat(body: unknown): Promise<ChatResponse> {
       reason = "No AI provider key is configured.";
     }
     result.source_note = matchedDocuments.length
-      ? `${reason} This answer uses local tourism pages only.`
+      ? `${reason} This answer uses locally indexed official pages only.`
       : `${reason} No matching local tourism evidence was found.`;
   } else if (result.sources?.length) {
-    const hasTourismSource = result.sources.some((source) =>
-      String(source?.url ?? "").startsWith("https://tourism.punjab.gov.pk/"),
-    );
-    result.answer_origin = hasTourismSource ? "Punjab Tourism website" : "OpenStreetMap / Photon";
+    const officialHosts = [
+      "tourism.punjab.gov.pk", "tdcp.gop.pk", "walledcitylahore.gop.pk",
+      "auqaf.punjab.gov.pk", "dts.gov.pk",
+    ];
+    const hasOfficialSource = result.sources.some((source) => {
+      try {
+        return officialHosts.includes(new URL(String(source?.url ?? "")).hostname);
+      } catch {
+        return false;
+      }
+    });
+    const hasWikipediaSource = result.sources.some((source) => {
+      try {
+        return new URL(String(source?.url ?? "")).hostname.endsWith("wikipedia.org");
+      } catch {
+        return false;
+      }
+    });
+    result.answer_origin = hasOfficialSource
+      ? "official government source"
+      : hasWikipediaSource
+        ? "Wikipedia secondary source"
+        : "OpenStreetMap / Photon";
   } else if (matchedDocuments.length) {
     result.answer_origin = "local fallback";
   } else if (result.answer === NO_ANSWER) {
-    result.answer_origin = "no matching Tourism website evidence";
-    result.source_note = "I could not find supporting information in the Punjab Tourism website.";
+    result.answer_origin = "no matching official-source evidence";
+    result.source_note = "I could not find supporting information in the official government tourism and heritage sources.";
     result.external_search_url = "https://www.google.com/search?" + urlencode({ q: question });
   } else {
     result.answer_origin = "external general knowledge";
     unverifiedGeneralAnswer = true;
     if (hasUnsourcedSpecificDetails(String(result.answer ?? ""))) result.answer = UNVERIFIED_DETAILS_ANSWER;
     result.source_note =
-      "Unverified: This answer is not supported by the Punjab Tourism website, and no " +
+      "Unverified: This answer is not supported by the official government tourism and heritage sources, and no " +
       "independent source was checked. Please verify it before relying on it; opening " +
       "hours, prices, and distances will not be stated unless a source is cited.";
     result.external_search_url = "https://www.google.com/search?" + urlencode({ q: question });

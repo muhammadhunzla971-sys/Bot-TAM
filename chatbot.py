@@ -98,8 +98,8 @@ STOP_WORDS = {
     "bataen", "maloomat", "tafseel", "kis", "liye",
 }
 NO_ANSWER = (
-    "I couldn't find that information in the Punjab Tourism pages available "
-    "to me. Please check the official website or contact the department."
+    "I couldn't find that information in the official government tourism and "
+    "heritage sources available to me. Please check the relevant department's website."
 )
 BOT_IDENTITY_ANSWER = (
     "I'm the Punjab Tourism Assistant. I answer questions using the tourism "
@@ -119,7 +119,7 @@ WELLBEING_ANSWER = (
 )
 BOT_CONTEXT_ANSWER = (
     "I'm a virtual Punjab Tourism Assistant, not a person with a physical "
-    "location. I answer questions using the Punjab Tourism website pages."
+    "location. I answer questions using official government tourism and heritage sources."
 )
 INVITATION_ANSWER = (
     "Of course! Ask away. I can help with Punjab destinations, heritage, "
@@ -129,7 +129,9 @@ SYSTEM_PROMPT = (
     "You are the Punjab Tourism Assistant. Answer in the language the visitor "
     "used. For questions about Punjab tourism or a place covered by the supplied "
     "official-page excerpts, use only facts explicitly supported by those "
-    "excerpts and cite their source IDs. If the excerpts do not answer a "
+    "excerpts. Prefer official government sources over Wikipedia; use "
+    "Wikipedia only as secondary background when official excerpts lack the fact, "
+    "and cite the supporting source IDs. If the excerpts do not answer a "
     "tourism/place question, output the exact no-information response supplied "
     "in the user message and an empty source_ids array. For unrelated general "
     "knowledge questions, answer helpfully using your general knowledge and "
@@ -349,8 +351,8 @@ def local_answer(question: str) -> str | None:
         "apkonho",
     }:
         return (
-            "Main Punjab Tourism Assistant hoon. Main Punjab Tourism website ki "
-            "maloomat ke mutabiq sawalon ke jawab deta hoon."
+            "Main Punjab Tourism Assistant hoon. Main Punjab ke official tourism "
+            "aur heritage idaron ki maloomat se jawab deta hoon."
         )
     if normalized in {"hi", "hello", "hey", "salam", "assalamualaikum"}:
         return GREETING_ANSWER
@@ -1843,6 +1845,7 @@ class Corpus:
         ranked: list[tuple[float, int]] = []
         total_documents = len(self.documents)
         for index, counts in enumerate(self._tokens):
+            document = self.documents[index]
             score = 0.0
             for term in terms:
                 frequency = counts.get(term, 0)
@@ -1863,6 +1866,10 @@ class Corpus:
                 score += 6.0
             elif _contains_token_phrase(self._body_text[index], query_tokens):
                 score += 4.0
+            priority = document.get("source_priority", 1)
+            source_group = document.get("source_group", "official")
+            if isinstance(priority, (int, float)) and source_group != "secondary":
+                score *= 1 + max(0, 5 - priority) * 0.05
             if score:
                 ranked.append((score, index))
 
@@ -1873,11 +1880,13 @@ class Corpus:
             fused_scores: dict[int, float] = {}
             for rank, (_, index) in enumerate(ranked, start=1):
                 fused_scores[index] = fused_scores.get(index, 0.0) + (
-                    1 / (RRF_RANK_CONSTANT + rank)
+                    (1 / (RRF_RANK_CONSTANT + rank))
+                    * self._source_weight(index)
                 )
             for rank, index in enumerate(semantic_indices, start=1):
                 fused_scores[index] = fused_scores.get(index, 0.0) + (
-                    1 / (RRF_RANK_CONSTANT + rank)
+                    (1 / (RRF_RANK_CONSTANT + rank))
+                    * self._source_weight(index)
                 )
             ranked_indices = sorted(
                 fused_scores,
@@ -1890,6 +1899,13 @@ class Corpus:
             self.documents[index]
             for index in ranked_indices[: max(1, limit)]
         ]
+
+    def _source_weight(self, index: int) -> float:
+        document = self.documents[index]
+        priority = document.get("source_priority", 1)
+        if document.get("source_group") == "secondary" or not isinstance(priority, (int, float)):
+            return 1.0
+        return 1 + max(0, 5 - priority) * 0.05
 
 
 def call_groq(
@@ -2659,29 +2675,40 @@ def make_handler(
                 else:
                     reason = "No AI provider key is configured."
                 result["source_note"] = (
-                    f"{reason} This answer uses local tourism pages only."
+                    f"{reason} This answer uses locally indexed official pages only."
                     if matched_documents
                     else f"{reason} No matching local tourism evidence was found."
                 )
             elif result.get("sources"):
+                official_hosts = {
+                    "tourism.punjab.gov.pk", "tdcp.gop.pk",
+                    "walledcitylahore.gop.pk", "auqaf.punjab.gov.pk",
+                    "dts.gov.pk",
+                }
                 has_tourism_source = any(
-                    str(source.get("url", "")).startswith(
-                        "https://tourism.punjab.gov.pk/"
-                    )
+                    (urlsplit(str(source.get("url", ""))).hostname or "").lower()
+                    in official_hosts
+                    for source in result["sources"]
+                    if isinstance(source, dict)
+                )
+                has_wikipedia_source = any(
+                    (urlsplit(str(source.get("url", ""))).hostname or "")
+                    .lower()
+                    .endswith("wikipedia.org")
                     for source in result["sources"]
                     if isinstance(source, dict)
                 )
                 result["answer_origin"] = (
-                    "Punjab Tourism website"
-                    if has_tourism_source
+                    "official government source" if has_tourism_source
+                    else "Wikipedia secondary source" if has_wikipedia_source
                     else "OpenStreetMap / Photon"
                 )
             elif matched_documents:
                 result["answer_origin"] = "local fallback"
             elif result.get("answer") == NO_ANSWER:
-                result["answer_origin"] = "no matching Tourism website evidence"
+                result["answer_origin"] = "no matching official-source evidence"
                 result["source_note"] = (
-                    "I could not find supporting information in the Punjab Tourism website."
+                    "I could not find supporting information in the official government tourism and heritage sources."
                 )
                 if not matched_documents:
                     result["external_search_url"] = (
@@ -2694,8 +2721,8 @@ def make_handler(
                 if has_unsourced_specific_details(str(result.get("answer", ""))):
                     result["answer"] = UNVERIFIED_DETAILS_ANSWER
                 result["source_note"] = (
-                    "Unverified: This answer is not supported by the Punjab Tourism "
-                    "website, and no independent source was checked. Please verify "
+                    "Unverified: This answer is not supported by the official government "
+                    "tourism and heritage sources, and no independent source was checked. Please verify "
                     "it before relying on it; opening hours, prices, and distances "
                     "will not be stated unless a source is cited."
                 )

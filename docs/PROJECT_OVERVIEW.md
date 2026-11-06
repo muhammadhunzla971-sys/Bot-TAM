@@ -3,7 +3,8 @@
 ## Purpose
 
 The Punjab Tourism Assistant is a small, local web application for asking
-questions about information indexed from the Punjab Tourism website. It can
+questions about information indexed from the listed official tourism and
+heritage departments, with Wikipedia used only for secondary background. It can
 return source-page links, map links and coordinates for place queries, and
 visual matches for uploaded tourism images.
 
@@ -61,6 +62,7 @@ visual matches for uploaded tourism images.
 | `chatbot.py` | Corpus loading/search, HTTP routes, question handling, provider calls, map/geocoder lookup, local fallback |
 | `static/index.html` | Chat interface, approximate department vicinity map, dynamic result maps, source links, image-match cards |
 | `scrape_tourism.py` | Authorized same-host HTML and image crawler; builds the JSONL corpus |
+| `ingest_sources.py` | Multi-site corpus refresh from `siteslink.md` plus secondary Wikipedia references |
 | `index_tourism_images.py` | Adds CLIP visual and text embeddings to an existing image index |
 | `image_matching.py` | Image validation, model asset management, embeddings, place labels, similarity ranking |
 | `hybrid_search.py` | Pinned multilingual ONNX model assets and local text embeddings for optional hybrid retrieval |
@@ -98,6 +100,10 @@ visual matches for uploaded tourism images.
    for at most 60 seconds (128 entries).
 5. The response may include source links, map links, coordinates and indexed
    images. The browser renders these with Leaflet and OpenStreetMap tiles.
+
+The corpus importer preserves the order of official domains in `siteslink.md`
+as source priority metadata and marks Wikipedia records as secondary. Retrieval
+slightly favors official records when relevant evidence is otherwise comparable.
 
 Image uploads use `POST /api/image`. The server validates the upload and
 compares its local CLIP embedding to stored image embeddings; it returns up to

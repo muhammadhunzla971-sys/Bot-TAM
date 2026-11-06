@@ -12,24 +12,24 @@ import {
 import type { ChatMessage, PageDocument, Place, Source } from "./types";
 
 export const NO_ANSWER =
-  "I couldn't find that information in the Punjab Tourism pages available " +
-  "to me. Please check the official website or contact the department.";
+  "I couldn't find that information in the official government tourism and " +
+  "heritage sources available to me. Please check the relevant department's website.";
 export const BOT_IDENTITY_ANSWER =
-  "I'm the Punjab Tourism Assistant. I answer questions using the tourism website pages.";
+  "I'm the Punjab Tourism Assistant. I answer questions using official government tourism and heritage sources.";
 export const TOURISM_DEPARTMENT_ANSWER =
   "The Punjab Tourism Department works with affiliated departments to " +
   "promote, preserve, enhance, and harness tourism potential across Punjab.";
 const GREETING_ANSWER =
   "Hi! I'm the Punjab Tourism Assistant. Ask me about places, heritage, " +
-  "culture, or tourism activities in Punjab.";
+  "culture, religious heritage, or tourism activities in Punjab.";
 const WELLBEING_ANSWER =
   "I'm doing well, thanks! I'm here to help with Punjab tourism. What would you like to know?";
 const BOT_CONTEXT_ANSWER =
   "I'm a virtual Punjab Tourism Assistant, not a person with a physical " +
-  "location. I answer questions using the Punjab Tourism website pages.";
+  "location. I answer questions using official government tourism and heritage sources.";
 const INVITATION_ANSWER =
   "Of course! Ask away. I can help with Punjab destinations, heritage, " +
-  "culture, and information from the tourism website.";
+  "culture, and information from official government tourism and heritage sources.";
 export const UNVERIFIED_DETAILS_ANSWER =
   "I can't provide specific opening hours, prices, or distances without a source.";
 
@@ -67,8 +67,8 @@ export function localAnswer(question: string): string | null {
   }
   if (["tumkyahu", "tumkyaho", "aapkyaho", "aapkonho", "apkonho"].includes(normalized)) {
     return (
-      "Main Punjab Tourism Assistant hoon. Main Punjab Tourism website ki " +
-      "maloomat ke mutabiq sawalon ke jawab deta hoon."
+      "Main Punjab Tourism Assistant hoon. Main Punjab ke official tourism " +
+      "aur heritage idaron ki maloomat se jawab deta hoon."
     );
   }
   if (["hi", "hello", "hey", "salam", "assalamualaikum"].includes(normalized)) return GREETING_ANSWER;

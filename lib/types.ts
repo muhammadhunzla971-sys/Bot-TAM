@@ -22,6 +22,9 @@ export interface PageDocument {
   text_embedding?: number[];
   content_sha256?: string;
   crawled_at?: string;
+  source_name?: string;
+  source_group?: string;
+  source_priority?: number;
 }
 
 export interface Place {

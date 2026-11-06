@@ -120,6 +120,7 @@ export class Corpus {
     const total = this.documents.length;
     const ranked: Array<[number, number]> = [];
     this.tokens.forEach((counts, index) => {
+      const document = this.documents[index];
       let score = 0;
       for (const term of terms) {
         const frequency = counts.get(term) ?? 0;
@@ -132,6 +133,10 @@ export class Corpus {
       if (containsTokenPhrase(this.titleTextTokens[index], queryTokens)) score += 10;
       else if (containsTokenPhrase(this.headingTextTokens[index], queryTokens)) score += 6;
       else if (containsTokenPhrase(this.bodyTextTokens[index], queryTokens)) score += 4;
+      const priority = Number(document.source_priority ?? 1);
+      if (document.source_group !== "secondary" && Number.isFinite(priority)) {
+        score *= 1 + Math.max(0, 5 - priority) * 0.05;
+      }
       if (score) ranked.push([score, index]);
     });
     // Stable sort, highest score first (matches Python's list.sort(reverse=True)).

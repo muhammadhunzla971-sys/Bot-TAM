@@ -24,7 +24,9 @@ const SYSTEM_PROMPT =
   "You are the Punjab Tourism Assistant. Answer in the language the visitor " +
   "used. For questions about Punjab tourism or a place covered by the supplied " +
   "official-page excerpts, use only facts explicitly supported by those " +
-  "excerpts and cite their source IDs. If the excerpts do not answer a " +
+  "excerpts. Prefer official government sources over Wikipedia; use " +
+  "Wikipedia only as secondary background when official excerpts lack the fact, " +
+  "and cite the supporting source IDs. If the excerpts do not answer a " +
   "tourism/place question, output the exact no-information response supplied " +
   "in the user message and an empty source_ids array. For unrelated general " +
   "knowledge questions, answer helpfully using your general knowledge and " +

@@ -1,4 +1,5 @@
 import json
+from http.client import IncompleteRead
 from pathlib import Path
 import tempfile
 import unittest
@@ -11,6 +12,7 @@ from scrape_tourism import (
     SameHostRedirectHandler,
     build_parser,
     crawl,
+    fetch_page,
     load_robots,
     normalize_url,
 )
@@ -44,6 +46,60 @@ class PageParserTests(unittest.TestCase):
                 {"src": "/system/files/murree.jpg", "alt": "Murree hills"},
                 {"src": "/large.jpg", "alt": "Valley"},
             ],
+        )
+
+    def test_page_fetch_retries_an_incomplete_http_response(self):
+        class FakeHeaders:
+            def get_content_type(self):
+                return "text/html"
+
+            def get_content_charset(self):
+                return "utf-8"
+
+        class FakeResponse:
+            headers = FakeHeaders()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def geturl(self):
+                return "https://tourism.punjab.gov.pk/"
+
+            def read(self, _limit):
+                return b"<html><body>Punjab tourism</body></html>"
+
+        class FakeOpener:
+            def __init__(self):
+                self.attempts = 0
+
+            def open(self, _request, timeout):
+                self.attempts += 1
+                if self.attempts == 1:
+                    raise IncompleteRead(b"partial")
+                return FakeResponse()
+
+        opener = FakeOpener()
+        with (
+            patch("scrape_tourism.build_opener", return_value=opener),
+            patch("scrape_tourism.time.sleep"),
+        ):
+            result = fetch_page(
+                "https://tourism.punjab.gov.pk/",
+                "test-agent",
+                "tourism.punjab.gov.pk",
+                3,
+            )
+
+        self.assertEqual(opener.attempts, 2)
+        self.assertEqual(
+            result,
+            (
+                "https://tourism.punjab.gov.pk/",
+                "<html><body>Punjab tourism</body></html>",
+            ),
         )
 
     def test_normalize_url_keeps_only_same_site_https_html_paths(self):
@@ -144,6 +200,35 @@ class CrawlOutputTests(unittest.TestCase):
 
 
 class RobotsRedirectTests(unittest.TestCase):
+    def test_html_robots_response_is_rejected_unless_authorized_override_is_set(self):
+        class FakeHeaders:
+            def get_content_type(self):
+                return "text/html"
+
+        class FakeResponse:
+            headers = FakeHeaders()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self, _limit):
+                return b"<!doctype html><html><body>Application shell</body></html>"
+
+        class FakeOpener:
+            def open(self, _request, timeout):
+                return FakeResponse()
+
+        with patch("scrape_tourism.build_opener", return_value=FakeOpener()):
+            with self.assertRaisesRegex(RuntimeError, "HTML page instead of a crawl policy"):
+                load_robots("https://tdcp.gop.pk/", "test-agent", False, 3)
+
+        with patch("scrape_tourism.build_opener", return_value=FakeOpener()):
+            parser = load_robots("https://tdcp.gop.pk/", "test-agent", True, 3)
+        self.assertTrue(parser.can_fetch("test-agent", "https://tdcp.gop.pk/"))
+
     def test_robots_fetch_uses_same_host_https_redirect_policy(self):
         class FakeResponse:
             def __enter__(self):
